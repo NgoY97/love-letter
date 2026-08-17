@@ -40,18 +40,74 @@ canvas{
 }
 
 #start{
-    position:absolute;
-    left:50%;
-    top:50%;
-    transform:translate(-50%,-50%);
-    padding:14px 35px;
-    border-radius:999px;
-    border:1px solid rgba(255,255,255,.5);
-    background:rgba(255,255,255,.08);
-    color:white;
-    cursor:pointer;
-    letter-spacing:3px;
-    z-index:10;
+  position:absolute;
+  left:50%;
+  top:50%;
+  transform:translate(-50%,-50%);
+
+  width:90px;
+  height:90px;
+
+  border:none;
+  cursor:pointer;
+  z-index:10;
+
+  color:white;
+  font-size:42px;
+
+  background:#ff4d88;
+
+  clip-path: path(
+    "M45 80
+     C45 80 5 55 5 25
+     C5 5 25 -5 45 15
+     C65 -5 85 5 85 25
+     C85 55 45 80 45 80"
+  );
+
+  box-shadow:
+      0 0 20px rgba(255,77,136,.7),
+      0 0 40px rgba(255,77,136,.5);
+
+  animation: heartbeat 1.2s infinite;
+}
+@keyframes heartbeat{
+
+  0%{
+    transform:
+      translate(-50%,-50%)
+      scale(1);
+  }
+
+  15%{
+    transform:
+      translate(-50%,-50%)
+      scale(1.15);
+  }
+
+  30%{
+    transform:
+      translate(-50%,-50%)
+      scale(1);
+  }
+
+  45%{
+    transform:
+      translate(-50%,-50%)
+      scale(1.12);
+  }
+
+  60%{
+    transform:
+      translate(-50%,-50%)
+      scale(1);
+  }
+
+  100%{
+    transform:
+      translate(-50%,-50%)
+      scale(1);
+  }
 }
 
 #message{
@@ -88,7 +144,7 @@ canvas{
 
     <canvas id="canvas"></canvas>
 
-    <button id="start">START</button>
+    <button id="start">💖</button>
 
     <div id="message"></div>
 
