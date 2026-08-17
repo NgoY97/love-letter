@@ -2,10 +2,10 @@
 <html lang="vi">
 <head>
     <meta charset="UTF-8">
-    <title>Xuất Dữ Liệu Pixel</title>
+    <title>Lọc 4500 Điểm Ảnh</title>
 </head>
 <body>
-    <h2>Chọn ảnh để tự động xuất dữ liệu pixel ra file JS/JSON</h2>
+    <h2>Chọn ảnh để lọc ra đúng 4,500 điểm ảnh nét nhất</h2>
     <input type="file" id="upload" accept="image/*">
 
     <script>
@@ -20,25 +20,71 @@
                     const canvas = document.createElement('canvas');
                     const ctx = canvas.getContext('2d');
                     
-                    canvas.width = img.width;
-                    canvas.height = img.height;
-                    ctx.drawImage(img, 0, 0);
+                    // Giới hạn kích thước xử lý để tọa độ hiển thị chuẩn
+                    const targetWidth = 300;
+                    const targetHeight = Math.round((img.height / img.width) * targetWidth);
+                    
+                    canvas.width = targetWidth;
+                    canvas.height = targetHeight;
+                    ctx.drawImage(img, 0, 0, targetWidth, targetHeight);
 
-                    // Lấy dữ liệu điểm ảnh
-                    const imgData = ctx.getImageData(0, 0, img.width, img.height);
-                    const pixels = Array.from(imgData.data);
+                    const imgData = ctx.getImageData(0, 0, targetWidth, targetHeight);
+                    const pixels = imgData.data;
+                    
+                    let candidates = [];
+
+                    // Lặp qua từng pixel để tính độ sáng
+                    for (let y = 0; y < targetHeight; y++) {
+                        for (let x = 0; x < targetWidth; x++) {
+                            const index = (y * targetWidth + x) * 4;
+                            const r = pixels[index];
+                            const g = pixels[index + 1];
+                            const b = pixels[index + 2];
+                            const a = pixels[index + 3];
+
+                            if (a < 50) continue; // Bỏ qua pixel trong suốt
+
+                            // Tính độ sáng theo công thức Grayscale
+                            const brightness = 0.299 * r + 0.587 * g + 0.114 * b;
+
+                            // Bỏ nền trắng (brightness > 220)
+                            // Lọc vùng sáng vừa đến sáng mạnh (brightness trong khoảng 60 đến 210)
+                            if (brightness >= 60 && brightness <= 210) {
+                                candidates.push({
+                                    x: x,
+                                    y: y,
+                                    r: r,
+                                    g: g,
+                                    b: b,
+                                    brightness: brightness
+                                });
+                            }
+                        }
+                    }
+
+                    // Lấy mẫu đều để giữ đúng 4500 điểm ảnh rải đều khắp nét vẽ
+                    const targetCount = 4500;
+                    let selectedPixels = [];
+                    
+                    if (candidates.length <= targetCount) {
+                        selectedPixels = candidates;
+                    } else {
+                        const step = candidates.length / targetCount;
+                        for (let i = 0; i < targetCount; i++) {
+                            const idx = Math.floor(i * step);
+                            selectedPixels.push(candidates[idx]);
+                        }
+                    }
 
                     // Tạo nội dung file JavaScript
-                    const fileContent = `// Tổng số pixel: ${img.width * img.height}\nconst pixelData = ${JSON.stringify(pixels)};`;
+                    const fileContent = `// Tổng số điểm ảnh: ${selectedPixels.length}\nconst imageWidth = ${targetWidth};\nconst imageHeight = ${targetHeight};\nconst pixelData = ${JSON.stringify(selectedPixels, null, 2)};`;
 
-                    // Tự động tạo link tải file về máy
+                    // Tự động tải file pixelData.js về máy
                     const blob = new Blob([fileContent], { type: 'text/javascript' });
-                    const url = URL.createObjectURL(blob);
                     const a = document.createElement('a');
-                    a.href = url;
+                    a.href = URL.createObjectURL(blob);
                     a.download = 'pixelData.js';
                     a.click();
-                    URL.revokeObjectURL(url);
                 };
                 img.src = event.target.result;
             };
