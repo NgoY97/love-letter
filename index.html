@@ -2,337 +2,1798 @@
 <html lang="vi">
 <head>
 <meta charset="UTF-8">
-<meta name="viewport" content="width=device-width,initial-scale=1.0">
-<title>Portrait Galaxy Animation</title>
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+
+<title>A Little Thing For You</title>
 
 <style>
+
 *{
-  margin:0;
-  padding:0;
-  box-sizing:border-box;
+    margin:0;
+    padding:0;
+    box-sizing:border-box;
 }
 
-html,body{
-  width:100%;
-  height:100%;
-  overflow:hidden;
-  background:#010207;
+html,
+body{
+    width:100%;
+    height:100%;
+    overflow:hidden;
+    background:#010207;
+    font-family:Georgia,serif;
+}
+
+#scene{
+    position:fixed;
+    inset:0;
+
+    background:
+        radial-gradient(
+            circle at 50% 45%,
+            #172653 0%,
+            #090d22 42%,
+            #03040b 75%,
+            #010207 100%
+        );
 }
 
 canvas{
-  position:fixed;
-  inset:0;
-  width:100%;
-  height:100%;
+    position:absolute;
+    inset:0;
+    width:100%;
+    height:100%;
 }
 
-#info{
-  position:fixed;
-  left:50%;
-  bottom:25px;
-  transform:translateX(-50%);
-  color:rgba(255,255,255,.45);
-  font-family:Arial,sans-serif;
-  font-size:13px;
-  letter-spacing:1px;
-  pointer-events:none;
+
+/* =========================================================
+   START BUTTON
+========================================================= */
+
+#start{
+
+    position:absolute;
+
+    left:50%;
+    top:50%;
+
+    transform:
+        translate(-50%,-50%);
+
+    width:100px;
+    height:100px;
+
+    border:none;
+    border-radius:50%;
+
+    background:
+        rgba(255,105,180,.18);
+
+    backdrop-filter:blur(10px);
+
+    font-size:48px;
+
+    cursor:pointer;
+
+    box-shadow:
+        0 0 20px rgba(255,105,180,.8),
+        0 0 45px rgba(255,105,180,.45);
+
+    animation:heartbeat 1.2s infinite;
+
+    z-index:20;
 }
+
+
+@keyframes heartbeat{
+
+    0%{
+        transform:
+            translate(-50%,-50%)
+            scale(1);
+    }
+
+    15%{
+        transform:
+            translate(-50%,-50%)
+            scale(1.15);
+    }
+
+    30%{
+        transform:
+            translate(-50%,-50%)
+            scale(1);
+    }
+
+    45%{
+        transform:
+            translate(-50%,-50%)
+            scale(1.12);
+    }
+
+    60%{
+        transform:
+            translate(-50%,-50%)
+            scale(1);
+    }
+
+    100%{
+        transform:
+            translate(-50%,-50%)
+            scale(1);
+    }
+
+}
+
+
+/* =========================================================
+   MESSAGE
+========================================================= */
+
+#message{
+
+    position:absolute;
+
+    left:50%;
+    top:50%;
+
+    transform:
+        translate(-50%,-50%);
+
+    text-align:center;
+
+    color:white;
+
+    opacity:0;
+
+    pointer-events:none;
+
+    z-index:15;
+
+    white-space:nowrap;
+
+    transition:
+        opacity 2.5s ease;
+}
+
+
+#message .main{
+
+    font-size:
+        clamp(25px,4vw,54px);
+
+    font-weight:bold;
+
+    text-shadow:
+        0 0 8px white,
+        0 0 18px #ff8fbd,
+        0 0 35px #ff4f9a,
+        0 0 65px #ff2f87;
+}
+
+
+#message .sub{
+
+    margin-top:10px;
+
+    font-size:
+        clamp(13px,1.5vw,21px);
+
+    line-height:1.5;
+
+    text-shadow:
+        0 0 8px white,
+        0 0 18px #ff7eb5;
+}
+
+
+/* =========================================================
+   HEART GLOW
+========================================================= */
+
+#heartGlow{
+
+    position:absolute;
+
+    left:50%;
+    top:50%;
+
+    width:20px;
+    height:20px;
+
+    transform:
+        translate(-50%,-50%)
+        scale(0);
+
+    border-radius:50%;
+
+    background:
+        rgba(255,70,150,.25);
+
+    filter:blur(25px);
+
+    pointer-events:none;
+
+    z-index:4;
+
+    transition:
+        transform 2s ease,
+        opacity 2s ease;
+
+    opacity:0;
+}
+
 </style>
 </head>
 
+
 <body>
 
-<canvas id="canvas"></canvas>
+<div id="scene">
 
-<div id="info">
-  SKY → PORTRAIT GALAXY → NEW GALAXY
+    <canvas id="canvas"></canvas>
+
+    <div id="heartGlow"></div>
+
+    <button id="start">💖</button>
+
+    <div id="message"></div>
+
 </div>
 
-<!-- Nạp file dữ liệu 4500 điểm ảnh của bạn -->
+
+<!-- ========================================================
+     FILE 4500 ĐIỂM ẢNH
+========================================================= -->
+
 <script src="pixelData.js"></script>
 
-<script>
-/* =========================================================
-   CANVAS SETUP
-========================================================= */
-const canvas = document.getElementById("canvas");
-const ctx = canvas.getContext("2d", { alpha: false });
 
-let W = innerWidth;
-let H = innerHeight;
-let DPR = 1;
+<script>
+
+/* =========================================================
+   CANVAS
+========================================================= */
+
+const canvas =
+    document.getElementById("canvas");
+
+const ctx =
+    canvas.getContext("2d");
+
+
+const startButton =
+    document.getElementById("start");
+
+const message =
+    document.getElementById("message");
+
+const heartGlow =
+    document.getElementById("heartGlow");
+
+
+let W = window.innerWidth;
+let H = window.innerHeight;
+
+let DPR =
+    Math.min(
+        window.devicePixelRatio || 1,
+        1.5
+    );
+
 
 function resize(){
-  W = innerWidth;
-  H = innerHeight;
-  DPR = Math.min(devicePixelRatio || 1, 1.5);
 
-  canvas.width = Math.round(W * DPR);
-  canvas.height = Math.round(H * DPR);
-  canvas.style.width = W + "px";
-  canvas.style.height = H + "px";
+    W = window.innerWidth;
+    H = window.innerHeight;
 
-  ctx.setTransform(DPR, 0, 0, DPR, 0, 0);
+    DPR =
+        Math.min(
+            window.devicePixelRatio || 1,
+            1.5
+        );
+
+    canvas.width =
+        Math.round(W * DPR);
+
+    canvas.height =
+        Math.round(H * DPR);
+
+    canvas.style.width =
+        W + "px";
+
+    canvas.style.height =
+        H + "px";
+
+    ctx.setTransform(
+        DPR,
+        0,
+        0,
+        DPR,
+        0,
+        0
+    );
 }
+
+
 resize();
-addEventListener("resize", resize);
+
+window.addEventListener(
+    "resize",
+    resize
+);
+
 
 /* =========================================================
-   PARTICLE COUNT & STATE
+   4500 PARTICLES
 ========================================================= */
-const N = (typeof pixelData !== 'undefined') ? pixelData.length : 4500;
+
+const N =
+    typeof pixelData !== "undefined"
+        ? pixelData.length
+        : 4500;
+
 
 const state = {
-  x: new Float32Array(N),
-  y: new Float32Array(N),
-  vx: new Float32Array(N),
-  vy: new Float32Array(N),
-  size: new Float32Array(N),
-  phase: new Float32Array(N),
-  speed: new Float32Array(N),
-  brightness: new Float32Array(N)
+
+    x:
+        new Float32Array(N),
+
+    y:
+        new Float32Array(N),
+
+    size:
+        new Float32Array(N),
+
+    phase:
+        new Float32Array(N),
+
+    speed:
+        new Float32Array(N),
+
+    brightness:
+        new Float32Array(N)
+
 };
 
-/* =========================================================
-   TARGET POSITIONS (GALAXY 1: PORTRAIT, GALAXY 2: NEW GALAXY)
-========================================================= */
-const galaxy1X = new Float32Array(N);
-const galaxy1Y = new Float32Array(N);
-const galaxy2X = new Float32Array(N);
-const galaxy2Y = new Float32Array(N);
 
-function hash(i, n){
-  const x = Math.sin(i * 127.1 + n * 311.7) * 43758.5453;
-  return x - Math.floor(x);
+/* =========================================================
+   TARGETS
+========================================================= */
+
+const galaxyX =
+    new Float32Array(N);
+
+const galaxyY =
+    new Float32Array(N);
+
+
+const portraitX =
+    new Float32Array(N);
+
+const portraitY =
+    new Float32Array(N);
+
+
+const heartX =
+    new Float32Array(N);
+
+const heartY =
+    new Float32Array(N);
+
+
+/* =========================================================
+   RANDOM HASH
+========================================================= */
+
+function hash(i,n){
+
+    const x =
+        Math.sin(
+            i * 127.1 +
+            n * 311.7
+        ) * 43758.5453;
+
+    return x -
+        Math.floor(x);
 }
 
-// 1. Chuyển dữ liệu 4500 điểm ảnh portrait thành tọa độ mục tiêu (Galaxy 1)
-function setupPortraitTargets() {
-  const imgW = typeof imageWidth !== 'undefined' ? imageWidth : 300;
-  const imgH = typeof imageHeight !== 'undefined' ? imageHeight : 300;
-  const scale = 5.0 / Math.max(imgW, imgH); // Đưa về hệ tọa độ thế giới (-2.5 đến 2.5)
 
-  for (let i = 0; i < N; i++) {
-    if (typeof pixelData !== 'undefined' && pixelData[i]) {
-      // Căn giữa tọa độ ảnh
-      galaxy1X[i] = (pixelData[i].x - imgW / 2) * scale;
-      galaxy1Y[i] = (pixelData[i].y - imgH / 2) * scale;
-    } else {
-      galaxy1X[i] = (hash(i, 1) - 0.5) * 4;
-      galaxy1Y[i] = (hash(i, 2) - 0.5) * 4;
+/* =========================================================
+   EASING
+========================================================= */
+
+function clamp(v,a,b){
+
+    return Math.max(
+        a,
+        Math.min(b,v)
+    );
+}
+
+
+function smooth(v){
+
+    v = clamp(v,0,1);
+
+    return (
+        v*v*v *
+        (v*(v*6-15)+10)
+    );
+}
+
+
+function easeInOut(v){
+
+    v = clamp(v,0,1);
+
+    return v < .5
+
+        ? 4*v*v*v
+
+        : 1 -
+          Math.pow(
+              -2*v+2,
+              3
+          ) / 2;
+}
+
+
+/* =========================================================
+   PORTRAIT
+
+   ĐỌC TRỰC TIẾP 4500 ĐIỂM TỪ pixelData.js
+========================================================= */
+
+function createPortrait(){
+
+    const imgW =
+        typeof imageWidth !== "undefined"
+            ? imageWidth
+            : 300;
+
+    const imgH =
+        typeof imageHeight !== "undefined"
+            ? imageHeight
+            : 300;
+
+
+    /*
+       Scale để hình vừa màn hình.
+    */
+
+    const scale =
+        5.0 /
+        Math.max(
+            imgW,
+            imgH
+        );
+
+
+    for(let i=0;i<N;i++){
+
+        if(
+            typeof pixelData !== "undefined" &&
+            pixelData[i]
+        ){
+
+            portraitX[i] =
+                (
+                    pixelData[i].x -
+                    imgW / 2
+                ) * scale;
+
+
+            portraitY[i] =
+                (
+                    pixelData[i].y -
+                    imgH / 2
+                ) * scale;
+
+        }
+        else{
+
+            portraitX[i] =
+                (hash(i,100)-.5)*4;
+
+            portraitY[i] =
+                (hash(i,101)-.5)*4;
+
+        }
+
     }
-  }
+
 }
 
-// 2. Cấu trúc Thiên hà ngẫu nhiên mới (Galaxy 2)
-function createGalaxy2() {
-  for (let i = 0; i < N; i++) {
-    const arm = i % 4;
-    const radius = 0.15 + Math.pow(hash(i, 50), 0.72) * 6.2;
-    const angle = arm * Math.PI / 2 + radius * 0.88 + (hash(i, 51) - 0.5) * 0.42;
-    const thickness = (hash(i, 52) - 0.5) * (0.18 + radius * 0.14);
-    const r = radius + thickness;
-
-    galaxy2X[i] = Math.cos(angle) * r;
-    galaxy2Y[i] = Math.sin(angle) * r * 0.55;
-  }
-}
-
-setupPortraitTargets();
-createGalaxy2();
 
 /* =========================================================
-   INITIAL SKY STATE
+   GALAXY
 ========================================================= */
-for(let i = 0; i < N; i++){
-  state.x[i] = (hash(i, 3) - 0.5) * 14;
-  state.y[i] = (hash(i, 4) - 0.5) * 9;
-  state.vx[i] = 0;
-  state.vy[i] = 0;
 
-  state.size[i] = 0.45 + hash(i, 1) * 1.45;
-  state.phase[i] = hash(i, 2) * Math.PI * 2;
-  state.speed[i] = 0.0007 + hash(i, 8) * 0.002;
+function createGalaxy(){
 
-  const r = hash(i, 9);
-  if(r < 0.10) state.brightness[i] = 1.35;
-  else if(r < 0.40) state.brightness[i] = 1.05;
-  else if(r < 0.90) state.brightness[i] = 0.78;
-  else state.brightness[i] = 0.55;
+    for(let i=0;i<N;i++){
+
+        const r1 =
+            hash(i,20);
+
+        const r2 =
+            hash(i,21);
+
+        const r3 =
+            hash(i,22);
+
+
+        /*
+           Phân bố sao.
+        */
+
+        const radius =
+            Math.pow(
+                r1,
+                .58
+            ) * 3.8;
+
+
+        /*
+           4 nhánh.
+        */
+
+        const arm =
+            i % 4;
+
+
+        const baseAngle =
+            arm *
+            Math.PI / 2;
+
+
+        const spiral =
+            radius * 1.28;
+
+
+        const noise =
+            (r2-.5) *
+            (
+                .25 +
+                radius*.16
+            );
+
+
+        const angle =
+            baseAngle +
+            spiral +
+            noise;
+
+
+        /*
+           Độ dày.
+        */
+
+        const thickness =
+            (r3-.5) *
+            (
+                .12 +
+                radius*.18
+            );
+
+
+        const r =
+            radius +
+            thickness;
+
+
+        galaxyX[i] =
+            Math.cos(angle) * r;
+
+
+        galaxyY[i] =
+            Math.sin(angle) *
+            r *
+            .48;
+
+
+        /*
+           Lõi sáng và dày.
+        */
+
+        if(radius < .75){
+
+            galaxyX[i] *= .65;
+
+            galaxyY[i] *= .65;
+
+        }
+
+    }
+
 }
+
 
 /* =========================================================
-   BACKGROUND STARS & RENDERING
+   HEART
+
+   Công thức trái tim.
 ========================================================= */
-const bg = [];
-for(let i = 0; i < 350; i++){
-  bg.push({
-    x: Math.random(),
-    y: Math.random(),
-    r: 0.2 + Math.random() * 0.9,
-    phase: Math.random() * Math.PI * 2,
-    speed: 0.0004 + Math.random() * 0.0015
-  });
+
+function createHeart(){
+
+    for(let i=0;i<N;i++){
+
+        const t =
+            Math.PI * 2 *
+            i / N;
+
+
+        /*
+           Một chút variation
+           để trái tim không quá đều.
+        */
+
+        const variation =
+            .96 +
+            hash(i,500)*.08;
+
+
+        heartX[i] =
+            16 *
+            Math.pow(
+                Math.sin(t),
+                3
+            ) *
+            .22 *
+            variation;
+
+
+        heartY[i] =
+            -(
+                13*Math.cos(t)
+                -
+                5*Math.cos(2*t)
+                -
+                2*Math.cos(3*t)
+                -
+                Math.cos(4*t)
+            )
+            *
+            .22 *
+            variation;
+
+    }
+
 }
+
+
+createPortrait();
+
+createGalaxy();
+
+createHeart();
+
+
+/* =========================================================
+   INITIAL SKY
+========================================================= */
+
+for(let i=0;i<N;i++){
+
+    state.x[i] =
+        (hash(i,3)-.5)*14;
+
+    state.y[i] =
+        (hash(i,4)-.5)*9;
+
+
+    state.size[i] =
+        .45 +
+        hash(i,5)*1.55;
+
+
+    state.phase[i] =
+        hash(i,6) *
+        Math.PI*2;
+
+
+    state.speed[i] =
+        .001 +
+        hash(i,7)*.002;
+
+
+    const b =
+        hash(i,8);
+
+
+    if(b < .08){
+
+        state.brightness[i] =
+            1.45;
+
+    }
+    else if(b < .30){
+
+        state.brightness[i] =
+            1.18;
+
+    }
+    else if(b < .80){
+
+        state.brightness[i] =
+            .90;
+
+    }
+    else{
+
+        state.brightness[i] =
+            .65;
+
+    }
+
+}
+
+
+/* =========================================================
+   BACKGROUND STARS
+========================================================= */
+
+const bgStars = [];
+
+
+for(let i=0;i<550;i++){
+
+    bgStars.push({
+
+        x:Math.random(),
+
+        y:Math.random(),
+
+        r:
+            .2 +
+            Math.random()*.85,
+
+        phase:
+            Math.random() *
+            Math.PI*2,
+
+        speed:
+            .0005 +
+            Math.random()*.0015
+
+    });
+
+}
+
+
+/* =========================================================
+   BACKGROUND
+========================================================= */
 
 function drawBackground(now){
-  const gradient = ctx.createRadialGradient(W * 0.5, H * 0.45, 0, W * 0.5, H * 0.45, Math.max(W, H) * 0.72);
-  gradient.addColorStop(0, "#121d42");
-  gradient.addColorStop(0.52, "#050713");
-  gradient.addColorStop(1, "#010207");
 
-  ctx.fillStyle = gradient;
-  ctx.fillRect(0, 0, W, H);
+    const gradient =
+        ctx.createRadialGradient(
 
-  for(const s of bg){
-    const twinkle = 0.5 + 0.5 * Math.sin(now * s.speed + s.phase);
-    ctx.globalAlpha = 0.10 + twinkle * 0.32;
-    ctx.fillStyle = "#fff";
-    ctx.beginPath();
-    ctx.arc(s.x * W, s.y * H, s.r, 0, Math.PI * 2);
-    ctx.fill();
-  }
-  ctx.globalAlpha = 1;
+            W*.5,
+            H*.45,
+            0,
+
+            W*.5,
+            H*.45,
+
+            Math.max(W,H)*.75
+
+        );
+
+
+    gradient.addColorStop(
+        0,
+        "#182653"
+    );
+
+    gradient.addColorStop(
+        .45,
+        "#090d22"
+    );
+
+    gradient.addColorStop(
+        .78,
+        "#02030a"
+    );
+
+    gradient.addColorStop(
+        1,
+        "#010207"
+    );
+
+
+    ctx.fillStyle =
+        gradient;
+
+    ctx.fillRect(
+        0,
+        0,
+        W,
+        H
+    );
+
+
+    /*
+       Sao nền luôn lấp lánh
+       trong TOÀN BỘ animation.
+    */
+
+    for(const s of bgStars){
+
+        const twinkle =
+            .5 +
+            .5 *
+            Math.sin(
+                now*s.speed +
+                s.phase
+            );
+
+
+        ctx.globalAlpha =
+            .08 +
+            twinkle*.35;
+
+
+        ctx.fillStyle =
+            "#ffffff";
+
+
+        ctx.beginPath();
+
+        ctx.arc(
+            s.x*W,
+            s.y*H,
+            s.r *
+            (
+                .75 +
+                twinkle*.35
+            ),
+            0,
+            Math.PI*2
+        );
+
+        ctx.fill();
+
+    }
+
+
+    ctx.globalAlpha=1;
+
 }
+
 
 /* =========================================================
-   MATH HELPERS & TRANSITIONS
+   SCALE
 ========================================================= */
-function clamp(v, a, b){ return Math.max(a, Math.min(b, v)); }
-function smooth(p){ p = clamp(p, 0, 1); return p * p * p * (p * (p * 6 - 15) + 10); }
-function lerp(a, b, p){ return a + (b - a) * p; }
-function worldScale(){ return Math.min(W / 5.8, H / 5.8); }
+
+function worldScale(){
+
+    return Math.min(
+        W/6.2,
+        H/6.2
+    );
+
+}
+
+
+/* =========================================================
+   SKY → GALAXY
+========================================================= */
 
 function updateSkyToGalaxy(progress){
-  const p = smooth(progress);
 
-  for(let i = 0; i < N; i++){
-    const tx = galaxy1X[i];
-    const ty = galaxy1Y[i];
+    const p =
+        easeInOut(progress);
 
-    const dx = tx - state.x[i];
-    const dy = ty - state.y[i];
 
-    const attraction = 0.00065 + p * 0.0045;
-    state.vx[i] += dx * attraction;
-    state.vy[i] += dy * attraction;
+    for(let i=0;i<N;i++){
 
-    const swirl = 0.0015 + p * 0.010;
-    state.vx[i] += -state.y[i] * swirl;
-    state.vy[i] += state.x[i] * swirl;
+        /*
+           Sao vào từng đợt.
+        */
 
-    state.vx[i] *= 0.965;
-    state.vy[i] *= 0.965;
+        const delay =
+            hash(i,200)*.22;
 
-    state.x[i] += state.vx[i];
-    state.y[i] += state.vy[i];
 
-    if(p > 0.72){
-      const lock = (p - 0.72) / 0.28;
-      state.x[i] = lerp(state.x[i], tx, lock * 0.018);
-      state.y[i] = lerp(state.y[i], ty, lock * 0.018);
+        const local =
+            clamp(
+                (p-delay) /
+                (1-delay),
+                0,
+                1
+            );
+
+
+        const q =
+            easeInOut(local);
+
+
+        const sx =
+            state.x[i];
+
+        const sy =
+            state.y[i];
+
+
+        const radius =
+            Math.sqrt(
+                sx*sx +
+                sy*sy
+            );
+
+
+        const angle =
+            Math.atan2(
+                sy,
+                sx
+            );
+
+
+        /*
+           Xoay càng lúc càng mạnh.
+        */
+
+        const rotation =
+            q *
+            (
+                1.25 +
+                radius*.18
+            );
+
+
+        /*
+           Thu vào tâm.
+        */
+
+        const collapse =
+            1 -
+            q*.88;
+
+
+        const r =
+            radius *
+            collapse;
+
+
+        const a =
+            angle +
+            rotation;
+
+
+        let x =
+            Math.cos(a)*r;
+
+
+        let y =
+            Math.sin(a)*r;
+
+
+        /*
+           Cuối cùng khóa vào
+           đúng hình ngân hà.
+        */
+
+        if(q > .55){
+
+            const lock =
+                smooth(
+                    (q-.55)/.45
+                );
+
+
+            x =
+                x*(1-lock) +
+                galaxyX[i]*lock;
+
+
+            y =
+                y*(1-lock) +
+                galaxyY[i]*lock;
+
+        }
+
+
+        state.x[i]=x;
+
+        state.y[i]=y;
+
     }
-  }
+
 }
 
-function updateGalaxyToGalaxy(progress){
-  const p = smooth(progress);
 
-  for(let i = 0; i < N; i++){
-    const expansion = 1 + p * 1.9;
-    const oldX = galaxy1X[i] * expansion;
-    const oldY = galaxy1Y[i] * expansion;
+/* =========================================================
+   GALAXY → PORTRAIT
 
-    const targetX = lerp(oldX, galaxy2X[i], p);
-    const targetY = lerp(oldY, galaxy2Y[i], p);
+   Đây là đoạn:
+   NGÂN HÀ → HÌNH 4500 ĐIỂM
+========================================================= */
 
-    const dx = targetX - state.x[i];
-    const dy = targetY - state.y[i];
+function updateGalaxyToPortrait(progress){
 
-    const attraction = 0.0008 + p * 0.0042;
-    state.vx[i] += dx * attraction;
-    state.vy[i] += dy * attraction;
+    const p =
+        easeInOut(progress);
 
-    const swirl = 0.003 + p * 0.010;
-    state.vx[i] += -state.y[i] * swirl;
-    state.vy[i] += state.x[i] * swirl;
 
-    state.vx[i] *= 0.965;
-    state.vy[i] *= 0.965;
+    for(let i=0;i<N;i++){
 
-    state.x[i] += state.vx[i];
-    state.y[i] += state.vy[i];
-  }
+        const delay =
+            hash(i,300)*.15;
+
+
+        const local =
+            clamp(
+                (p-delay) /
+                (1-delay),
+                0,
+                1
+            );
+
+
+        const q =
+            easeInOut(local);
+
+
+        /*
+           Ngân hà xoay nhẹ
+           trước khi hội tụ.
+        */
+
+        const angle =
+            q *
+            (
+                .65 +
+                hash(i,301)*.25
+            );
+
+
+        const gx =
+            galaxyX[i];
+
+        const gy =
+            galaxyY[i];
+
+
+        const rx =
+            gx*Math.cos(angle) -
+            gy*Math.sin(angle);
+
+
+        const ry =
+            gx*Math.sin(angle) +
+            gy*Math.cos(angle);
+
+
+        /*
+           Hơi co lại.
+        */
+
+        const scale =
+            1 -
+            q*.12;
+
+
+        const ax =
+            rx*scale;
+
+        const ay =
+            ry*scale;
+
+
+        /*
+           Morph trực tiếp
+           sang 4500 điểm ảnh.
+        */
+
+        state.x[i] =
+            ax*(1-q) +
+            portraitX[i]*q;
+
+
+        state.y[i] =
+            ay*(1-q) +
+            portraitY[i]*q;
+
+    }
+
 }
+
+
+/* =========================================================
+   PORTRAIT → HEART
+
+   Không biến mất.
+
+   Hình ảnh sẽ tan thành sao
+   rồi tổ chức thành trái tim.
+========================================================= */
+
+function updatePortraitToHeart(progress){
+
+    const p =
+        easeInOut(progress);
+
+
+    for(let i=0;i<N;i++){
+
+        const delay =
+            hash(i,400)*.18;
+
+
+        const local =
+            clamp(
+                (p-delay) /
+                (1-delay),
+                0,
+                1
+            );
+
+
+        const q =
+            easeInOut(local);
+
+
+        /*
+           Tọa độ hình ảnh.
+        */
+
+        const px =
+            portraitX[i];
+
+
+        const py =
+            portraitY[i];
+
+
+        /*
+           Góc xoáy quanh tâm.
+        */
+
+        const originalAngle =
+            Math.atan2(
+                py,
+                px
+            );
+
+
+        const radius =
+            Math.sqrt(
+                px*px +
+                py*py
+            );
+
+
+        /*
+           Sao bắt đầu bung ra.
+        */
+
+        const explosion =
+            q *
+            (
+                .12 +
+                radius*.20
+            );
+
+
+        const spin =
+            q *
+            2.4;
+
+
+        const a =
+            originalAngle +
+            spin;
+
+
+        const scatteredX =
+            px +
+            Math.cos(a) *
+            explosion;
+
+
+        const scatteredY =
+            py +
+            Math.sin(a) *
+            explosion;
+
+
+        /*
+           Sau đó hội tụ vào trái tim.
+        */
+
+        state.x[i] =
+            scatteredX*(1-q) +
+            heartX[i]*q;
+
+
+        state.y[i] =
+            scatteredY*(1-q) +
+            heartY[i]*q;
+
+    }
+
+}
+
+
+/* =========================================================
+   HEART BEAT SCALE
+========================================================= */
+
+function getHeartScale(now){
+
+    /*
+       Nhịp tim rất nhẹ.
+    */
+
+    const beat =
+        Math.sin(
+            now*.006
+        );
+
+
+    const beat2 =
+        Math.sin(
+            now*.012
+        );
+
+
+    return (
+        1 +
+        beat*.018 +
+        beat2*.006
+    );
+
+}
+
 
 /* =========================================================
    DRAW PARTICLES
 ========================================================= */
+
 function drawParticles(now){
-  const s = worldScale() * 0.92;
-  const paths = Array.from({ length: 6 }, () => new Path2D());
 
-  for(let i = 0; i < N; i++){
-    const px = W / 2 + state.x[i] * s;
-    const py = H / 2 + state.y[i] * s;
+    const scale =
+        worldScale();
 
-    const wave = 0.5 + 0.5 * Math.sin(now * state.speed[i] + state.phase[i]);
-    const twinkle = 0.30 + wave * 0.70;
-    const brightness = twinkle * state.brightness[i];
-    const r = state.size[i] * (0.72 + brightness * 0.28);
 
-    let bin;
-    if(brightness > 1.15) bin = 5;
-    else if(brightness > 0.95) bin = 4;
-    else if(brightness > 0.78) bin = 3;
-    else if(brightness > 0.60) bin = 2;
-    else if(brightness > 0.42) bin = 1;
-    else bin = 0;
+    const heartScale =
+        getHeartScale(now);
 
-    paths[bin].moveTo(px + r, py);
-    paths[bin].arc(px, py, r, 0, Math.PI * 2);
-  }
 
-  const colors = ["#8f9abb", "#b9c5e8", "#d6ddff", "#e7ebff", "#f4f5ff", "#ffffff"];
+    for(let i=0;i<N;i++){
 
-  for(let i = 0; i < 6; i++){
-    ctx.globalAlpha = i === 5 ? 1 : 0.92;
-    ctx.fillStyle = colors[i];
-    ctx.fill(paths[i]);
-  }
-  ctx.globalAlpha = 1;
+        let px =
+            W/2 +
+            state.x[i]*scale;
+
+
+        let py =
+            H/2 +
+            state.y[i]*scale;
+
+
+        /*
+           Chỉ áp dụng heartbeat
+           ở trung tâm.
+        */
+
+        if(
+            heartVisible &&
+            heartProgress > .7
+        ){
+
+            const hs =
+                heartScale;
+
+
+            px =
+                W/2 +
+                (
+                    px-W/2
+                ) * hs;
+
+
+            py =
+                H/2 +
+                (
+                    py-H/2
+                ) * hs;
+
+        }
+
+
+        if(
+            px < -15 ||
+            px > W+15 ||
+            py < -15 ||
+            py > H+15
+        ){
+
+            continue;
+
+        }
+
+
+        /*
+           Lấp lánh đậm nhạt.
+        */
+
+        const wave =
+            .5 +
+            .5 *
+            Math.sin(
+                now *
+                state.speed[i] +
+                state.phase[i]
+            );
+
+
+        const brightness =
+            wave *
+            state.brightness[i];
+
+
+        const radius =
+            state.size[i] *
+            (
+                .65 +
+                brightness*.45
+            );
+
+
+        /*
+           Halo cho sao sáng.
+        */
+
+        if(
+            brightness > 1.05
+        ){
+
+            ctx.globalAlpha =
+                .08 +
+                brightness*.10;
+
+
+            ctx.fillStyle =
+                "#ffffff";
+
+
+            ctx.beginPath();
+
+            ctx.arc(
+                px,
+                py,
+                radius*3.5,
+                0,
+                Math.PI*2
+            );
+
+            ctx.fill();
+
+        }
+
+
+        /*
+           Ngôi sao chính.
+        */
+
+        ctx.globalAlpha =
+            .40 +
+            brightness*.48;
+
+
+        ctx.fillStyle =
+            brightness > 1.05
+                ? "#ffffff"
+                : "#dce5ff";
+
+
+        ctx.beginPath();
+
+        ctx.arc(
+            px,
+            py,
+            radius,
+            0,
+            Math.PI*2
+        );
+
+        ctx.fill();
+
+
+        /*
+           Một số sao sáng có tia.
+        */
+
+        if(
+            state.brightness[i] > 1.35 &&
+            brightness > .92
+        ){
+
+            ctx.globalAlpha =
+                .28;
+
+
+            ctx.strokeStyle =
+                "#ffffff";
+
+
+            ctx.lineWidth=.5;
+
+
+            ctx.beginPath();
+
+            ctx.moveTo(
+                px-radius*4,
+                py
+            );
+
+            ctx.lineTo(
+                px+radius*4,
+                py
+            );
+
+
+            ctx.moveTo(
+                px,
+                py-radius*4
+            );
+
+            ctx.lineTo(
+                px,
+                py+radius*4
+            );
+
+
+            ctx.stroke();
+
+        }
+
+    }
+
+
+    ctx.globalAlpha=1;
+
 }
+
 
 /* =========================================================
-   TIMELINE & ANIMATION LOOP
+   STATE
 ========================================================= */
-const SKY_TIME = 4500;
-const SKY_TO_GALAXY = 6500;
-const GALAXY_TO_NEW = 8000;
-const START = performance.now();
+
+let heartVisible=false;
+
+let heartProgress=0;
+
+
+/* =========================================================
+   TIMELINE
+========================================================= */
+
+const SKY_TIME =
+    3500;
+
+
+const SKY_TO_GALAXY =
+    7000;
+
+
+const GALAXY_HOLD =
+    3000;
+
+
+const GALAXY_TO_PORTRAIT =
+    6500;
+
+
+const PORTRAIT_HOLD =
+    4500;
+
+
+const PORTRAIT_TO_HEART =
+    6500;
+
+
+const HEART_HOLD =
+    999999;
+
+
+let START_TIME=null;
+
+let finished=false;
+
+
+/* =========================================================
+   ANIMATION FRAME
+========================================================= */
 
 function frame(now){
-  const elapsed = now - START;
 
-  drawBackground(now);
+    if(START_TIME===null){
 
-  if(elapsed < SKY_TIME){
-    // Giai đoạn 1: Giữ nguyên vị trí sao nhấp nháy
-  } else if(elapsed < SKY_TIME + SKY_TO_GALAXY){
-    // Giai đoạn 2: Xoáy vào hình Chân dung của bạn
-    const p = (elapsed - SKY_TIME) / SKY_TO_GALAXY;
-    updateSkyToGalaxy(p);
-  } else if(elapsed < SKY_TIME + SKY_TO_GALAXY + GALAXY_TO_NEW){
-    // Giai đoạn 3: Từ chân dung bung ra Dải thiên hà mới
-    const p = (elapsed - SKY_TIME - SKY_TO_GALAXY) / GALAXY_TO_NEW;
-    updateGalaxyToGalaxy(p);
-  }
+        START_TIME=now;
 
-  drawParticles(now);
-  requestAnimationFrame(frame);
+    }
+
+
+    const elapsed =
+        now-START_TIME;
+
+
+    drawBackground(now);
+
+
+    /* =====================================================
+       1. BẦU TRỜI
+    ===================================================== */
+
+    if(
+        elapsed <
+        SKY_TIME
+    ){
+
+        /*
+           Chỉ lấp lánh.
+        */
+
+    }
+
+
+    /* =====================================================
+       2. BẦU TRỜI → NGÂN HÀ
+    ===================================================== */
+
+    else if(
+        elapsed <
+        SKY_TIME +
+        SKY_TO_GALAXY
+    ){
+
+        const p =
+            (
+                elapsed -
+                SKY_TIME
+            ) /
+            SKY_TO_GALAXY;
+
+
+        updateSkyToGalaxy(p);
+
+    }
+
+
+    /* =====================================================
+       3. GIỮ NGÂN HÀ
+    ===================================================== */
+
+    else if(
+        elapsed <
+        SKY_TIME +
+        SKY_TO_GALAXY +
+        GALAXY_HOLD
+    ){
+
+        for(let i=0;i<N;i++){
+
+            state.x[i] =
+                galaxyX[i];
+
+            state.y[i] =
+                galaxyY[i];
+
+        }
+
+    }
+
+
+    /* =====================================================
+       4. NGÂN HÀ → HÌNH ẢNH
+    ===================================================== */
+
+    else if(
+        elapsed <
+        SKY_TIME +
+        SKY_TO_GALAXY +
+        GALAXY_HOLD +
+        GALAXY_TO_PORTRAIT
+    ){
+
+        const start =
+            SKY_TIME +
+            SKY_TO_GALAXY +
+            GALAXY_HOLD;
+
+
+        const p =
+            (
+                elapsed-start
+            ) /
+            GALAXY_TO_PORTRAIT;
+
+
+        updateGalaxyToPortrait(p);
+
+    }
+
+
+    /* =====================================================
+       5. GIỮ HÌNH ẢNH
+    ===================================================== */
+
+    else if(
+        elapsed <
+        SKY_TIME +
+        SKY_TO_GALAXY +
+        GALAXY_HOLD +
+        GALAXY_TO_PORTRAIT +
+        PORTRAIT_HOLD
+    ){
+
+        for(let i=0;i<N;i++){
+
+            state.x[i] =
+                portraitX[i];
+
+            state.y[i] =
+                portraitY[i];
+
+        }
+
+    }
+
+
+    /* =====================================================
+       6. HÌNH ẢNH → TRÁI TIM
+    ===================================================== */
+
+    else if(
+        elapsed <
+        SKY_TIME +
+        SKY_TO_GALAXY +
+        GALAXY_HOLD +
+        GALAXY_TO_PORTRAIT +
+        PORTRAIT_HOLD +
+        PORTRAIT_TO_HEART
+    ){
+
+        const start =
+            SKY_TIME +
+            SKY_TO_GALAXY +
+            GALAXY_HOLD +
+            GALAXY_TO_PORTRAIT +
+            PORTRAIT_HOLD;
+
+
+        const p =
+            (
+                elapsed-start
+            ) /
+            PORTRAIT_TO_HEART;
+
+
+        heartProgress=p;
+
+        heartVisible=true;
+
+
+        updatePortraitToHeart(p);
+
+    }
+
+
+    /* =====================================================
+       7. TRÁI TIM
+    ===================================================== */
+
+    else{
+
+        heartVisible=true;
+
+        heartProgress=1;
+
+
+        for(let i=0;i<N;i++){
+
+            state.x[i] =
+                heartX[i];
+
+            state.y[i] =
+                heartY[i];
+
+        }
+
+
+        if(!finished){
+
+            finished=true;
+
+            /*
+               Glow xuất hiện nhẹ.
+            */
+
+            heartGlow.style.opacity="1";
+
+            heartGlow.style.transform =
+                "translate(-50%,-50%) scale(12)";
+
+
+            /*
+               Chờ trái tim ổn định
+               rồi mới hiện chữ.
+            */
+
+            setTimeout(
+
+                ()=>{
+
+                    message.innerHTML = `
+
+                        <div class="main">
+                            I like you.
+                        </div>
+
+                        <div class="sub">
+                            That's all.<br>
+                            I just wanted you to know.
+                        </div>
+
+                    `;
+
+                    message.style.opacity="1";
+
+                },
+
+                1300
+
+            );
+
+        }
+
+    }
+
+
+    drawParticles(now);
+
+
+    requestAnimationFrame(frame);
+
 }
 
-requestAnimationFrame(frame);
+
+/* =========================================================
+   START
+========================================================= */
+
+startButton.addEventListener(
+    "click",
+    ()=>{
+
+        startButton.style.display="none";
+
+        START_TIME=null;
+
+        finished=false;
+
+        heartVisible=false;
+
+        heartProgress=0;
+
+        message.style.opacity="0";
+
+        heartGlow.style.opacity="0";
+
+        heartGlow.style.transform =
+            "translate(-50%,-50%) scale(0)";
+
+
+        requestAnimationFrame(frame);
+
+    }
+);
+
 </script>
 
 </body>
