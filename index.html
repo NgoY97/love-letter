@@ -233,21 +233,31 @@ function createParticles(){
     }
 
 }
-function streamShape(i,n){
+function streamShape(i, n) {
+    const t = i / n;
 
-    const t = i/n;
+    // Trải từ trái sang phải
+    const x = -8 + t * 16;
 
-    return{
+    // Trục cong của Ngân Hà
+    const center = Math.sin(t * Math.PI * 1.4) * 1.0;
 
-        x:
-        -8 +
-        t*16,
+    // Độ dày của Ngân Hà
+    // Phần lớn sao tập trung gần trung tâm
+    const spread = (Math.random() + Math.random() - 1) * 1.8;
 
-        y:
-        Math.sin(t*10)*2
+    // Các nhánh xoắn
+    const spiral =
+        Math.sin(t * Math.PI * 10 + spread * 2.5) *
+        (0.25 + Math.abs(spread) * 0.15);
 
+    // Một chút nhiễu tự nhiên
+    const noise = (Math.random() - 0.5) * 0.25;
+
+    return {
+        x: x,
+        y: center + spread + spiral + noise
     };
-
 }
 function portraitShape(i,n){
 
