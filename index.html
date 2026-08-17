@@ -99,19 +99,29 @@ canvas{
     left:50%;
     top:50%;
     transform:translate(-50%,-50%);
-    width:min(90%,700px);
-    color:white;
     text-align:center;
+    color:white;
     opacity:0;
-    transition:opacity 2s;
+    transition:opacity 2s ease;
+    pointer-events:none;
+    z-index:10;
+}
 
-    font-size:clamp(24px,3vw,38px);
-    line-height:1.7;
+#message .main{
+    font-size:clamp(30px,4vw,56px);
+    font-weight:bold;
 
     text-shadow:
-        0 0 12px rgba(255,255,255,.7),
-        0 0 30px rgba(255,255,255,.4);
+        0 0 10px white,
+        0 0 25px hotpink,
+        0 0 50px hotpink;
 }
+
+#message .sub{
+    margin-top:10px;
+    font-size:clamp(14px,1.5vw,22px);
+}
+
 
 .small{
     display:block;
@@ -223,45 +233,107 @@ function createParticles(){
     }
 
 }
+function galaxyShape(i,n){
 
-function flowerShape(i,n){
+    const t = i * 0.15;
 
-    const flowerCount=flowerCenters.length;
+    const r = (i / n) * 8;
 
-    const flower=flowerCenters[i%flowerCount];
+    return {
+        x: Math.cos(t) * r,
+        y: Math.sin(t) * r
+    };
+}
+function portraitShape(i,n){
 
-    const local=Math.floor(i/flowerCount);
+    const t = i / n;
 
-    const total=n/flowerCount;
+    // viền mặt
+    if(t < 0.45){
 
-    const t=Math.PI*2*(local/total);
+        const a = (t / 0.45) * Math.PI * 2;
 
-    const r=flower.size*Math.cos(5*t)*0.45;
+        return{
+            x: Math.cos(a) * 1.6,
+            y: Math.sin(a) * 2.1
+        };
+    }
+
+    // kính trái
+    if(t < 0.60){
+
+        const a =
+        ((t - 0.45) / 0.15) *
+        Math.PI * 2;
+
+        return{
+            x: -0.65 + Math.cos(a) * 0.45,
+            y: -0.25 + Math.sin(a) * 0.35
+        };
+    }
+
+    // kính phải
+    if(t < 0.75){
+
+        const a =
+        ((t - 0.60) / 0.15) *
+        Math.PI * 2;
+
+        return{
+            x: 0.65 + Math.cos(a) * 0.45,
+            y: -0.25 + Math.sin(a) * 0.35
+        };
+    }
+
+    // cầu kính
+    if(t < 0.82){
+
+        const p = (t - 0.75) / 0.07;
+
+        return{
+            x: -0.2 + p * 0.4,
+            y: -0.25
+        };
+    }
+
+    // vai vest
+    const p = (t - 0.82) / 0.18;
 
     return{
-
-        x:flower.x+r*Math.cos(t),
-        y:flower.y+r*Math.sin(t)
-
+        x: (p * 5) - 2.5,
+        y: 2.4 - Math.abs(p - 0.5)
     };
 }
 
 function heartShape(i,n){
 
-    const t=Math.PI*2*i/n;
+    const t = Math.PI*2*i/n;
 
     return{
 
-        x:(16*Math.sin(t)**3)*0.12,
+        x:(16*Math.sin(t)**3)*0.22,
 
         y:(
         -(13*Math.cos(t)
         -5*Math.cos(2*t)
         -2*Math.cos(3*t)
         -Math.cos(4*t))
-        )*0.12
-
+        )*0.22
     };
+}
+async function heartBeat(){
+
+    for(let k=0;k<3;k++){
+
+        await animateShape(
+            heartShape,
+            heartShape,
+            400
+        );
+
+        await sleep(300);
+
+    }
 }
 
 const colors=[
@@ -321,16 +393,17 @@ function sleep(ms){
     );
 }
 
-function animateFlowers(){
+function animateShape(from,to,duration){
 
     return new Promise(resolve=>{
 
-        const startTime=performance.now();
+        const startTime =
+        performance.now();
 
         function frame(now){
 
-            let p=Math.min(
-                (now-startTime)/300,
+            const p = Math.min(
+                (now-startTime)/duration,
                 1
             );
 
@@ -339,15 +412,19 @@ function animateFlowers(){
             drawStars();
 
             drawMorph(
-                flowerShape,
-                flowerShape,
+                from,
+                to,
                 p
             );
 
-            if(p<1){
+            if(p < 1){
+
                 requestAnimationFrame(frame);
+
             }else{
+
                 resolve();
+
             }
         }
 
@@ -411,37 +488,51 @@ async function run(){
 
     startButton.style.display="none";
 
-    createFlowers();
     createParticles();
 
-    await animateFlowers();
+    // Sao trời
 
-    await sleep(1000);
+    drawStars();
 
-    await animateHeart();
+    await sleep(2500);
 
-    await sleep(1000);
+    // Thiên hà
 
-    showMessage(`
-        Some things are easier to create than to say.
-        <span class="small">
-        So I'll just say it.
-        </span>
-    `);
+    await animateShape(
+        heartShape,
+        galaxyShape,
+        4000
+    );
+
+    // Chân dung bằng sao
+
+    await animateShape(
+        galaxyShape,
+        portraitShape,
+        5000
+    );
 
     await sleep(4000);
 
-    hideMessage();
+    // Chân dung thành trái tim
 
-    await sleep(2000);
+    await animateShape(
+        portraitShape,
+        heartShape,
+        5000
+    );
 
-    showMessage(`
-        I like you.
-        <span class="small">
-        That's all. I just wanted you to know.
-        </span>
-    `);
+    await heartBeat();
 
+    message.innerHTML = `
+      <div class="main">I like you.</div>
+      <div class="sub">
+        That's all.<br>
+        I just wanted you to know.
+      </div>
+    `;
+
+    message.style.opacity = 1;
 }
 
 startButton.addEventListener(
