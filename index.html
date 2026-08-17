@@ -1,256 +1,49 @@
 <!DOCTYPE html>
-<html lang="en">
+<html lang="vi">
 <head>
-<meta charset="UTF-8">
-<meta name="viewport" content="width=device-width,initial-scale=1.0">
-<title>A Little Thing For You</title>
-<style>
-*{margin:0;padding:0;box-sizing:border-box}
-html,body{width:100%;height:100%;overflow:hidden;background:#02030a;font-family:Georgia,serif}
-#scene{position:relative;width:100%;height:100%;
-background:radial-gradient(circle at 50% 45%,#111c3d 0%,#050713 58%,#010207 100%)}
-canvas{position:absolute;inset:0;width:100%;height:100%}
-#start{position:absolute;left:50%;top:50%;transform:translate(-50%,-50%);
-width:100px;height:100px;border:0;border-radius:50%;
-background:rgba(255,105,180,.18);backdrop-filter:blur(10px);font-size:48px;
-cursor:pointer;box-shadow:0 0 25px #ff69b4,0 0 60px rgba(255,105,180,.5);
-animation:beat 1.2s infinite;z-index:10}
-@keyframes beat{
-0%,100%{transform:translate(-50%,-50%) scale(1)}
-15%{transform:translate(-50%,-50%) scale(1.15)}
-30%{transform:translate(-50%,-50%) scale(1)}
-45%{transform:translate(-50%,-50%) scale(1.12)}
-60%{transform:translate(-50%,-50%) scale(1)}
-}
-#message{position:absolute;left:50%;top:50%;transform:translate(-50%,-50%);
-width:90%;text-align:center;color:#fff;opacity:0;transition:opacity 2s;
-z-index:20;pointer-events:none}
-.main{font-size:clamp(30px,4vw,56px);font-weight:bold;
-text-shadow:0 0 10px #fff,0 0 25px #ff8fbd,0 0 50px #ff5fa8}
-.sub{margin-top:10px;font-size:clamp(14px,1.5vw,22px);line-height:1.5}
-</style>
+    <meta charset="UTF-8">
+    <title>Xuất Dữ Liệu Pixel</title>
 </head>
 <body>
-<div id="scene">
-<canvas id="canvas"></canvas>
-<button id="start">💖</button>
-<div id="message"></div>
-</div>
+    <h2>Chọn ảnh để tự động xuất dữ liệu pixel ra file JS/JSON</h2>
+    <input type="file" id="upload" accept="image/*">
 
-<script src="facePixels_lines_grayscale.js"></script>
-<script>
-const canvas=document.getElementById("canvas");
-const ctx=canvas.getContext("2d");
-const start=document.getElementById("start");
-const message=document.getElementById("message");
+    <script>
+        document.getElementById('upload').addEventListener('change', function(e) {
+            const file = e.target.files[0];
+            if (!file) return;
 
-let W=innerWidth,H=innerHeight,DPR=1;
-function resize(){
-  W=innerWidth; H=innerHeight;
-  DPR=Math.min(devicePixelRatio||1,1.5);
-  canvas.width=Math.round(W*DPR);
-  canvas.height=Math.round(H*DPR);
-  canvas.style.width=W+"px"; canvas.style.height=H+"px";
-  ctx.setTransform(DPR,0,0,DPR,0,0);
-}
-resize();
-addEventListener("resize",resize);
+            const reader = new FileReader();
+            reader.onload = function(event) {
+                const img = new Image();
+                img.onload = function() {
+                    const canvas = document.createElement('canvas');
+                    const ctx = canvas.getContext('2d');
+                    
+                    canvas.width = img.width;
+                    canvas.height = img.height;
+                    ctx.drawImage(img, 0, 0);
 
-const N=window.facePixelCount;
-const GW=window.facePixelGrid.width;
-const GH=window.facePixelGrid.height;
-const binary=atob(window.facePixelData);
+                    // Lấy dữ liệu điểm ảnh
+                    const imgData = ctx.getImageData(0, 0, img.width, img.height);
+                    const pixels = Array.from(imgData.data);
 
-const faceX=new Float32Array(N);
-const faceY=new Float32Array(N);
-const faceLum=new Uint8Array(N);
+                    // Tạo nội dung file JavaScript
+                    const fileContent = `// Tổng số pixel: ${img.width * img.height}\nconst pixelData = ${JSON.stringify(pixels)};`;
 
-for(let i=0;i<N;i++){
-  const k=i*5;
-  const x=binary.charCodeAt(k)|binary.charCodeAt(k+1)<<8;
-  const y=binary.charCodeAt(k+2)|binary.charCodeAt(k+3)<<8;
-  const lum=binary.charCodeAt(k+4);
-  faceX[i]=(x/(GW-1)-.5)*5.8;
-  faceY[i]=(y/(GH-1)-.5)*(5.8*GH/GW);
-  faceLum[i]=lum;
-}
-
-function hash(i,n=1){
-  const x=Math.sin(i*127.1+n*311.7)*43758.5453;
-  return x-Math.floor(x);
-}
-
-const size=new Float32Array(N);
-const phase=new Float32Array(N);
-for(let i=0;i<N;i++){
-  size[i]=.65+hash(i,1)*1.25;
-  phase[i]=hash(i,2)*Math.PI*2;
-}
-
-/* Fixed sky */
-const skyX=new Float32Array(N),skyY=new Float32Array(N);
-for(let i=0;i<N;i++){
-  skyX[i]=(hash(i,3)-.5)*14;
-  skyY[i]=(hash(i,4)-.5)*9;
-}
-
-/* Fixed galaxy: SAME particle indices morph into the face. */
-const galX=new Float32Array(N),galY=new Float32Array(N);
-for(let i=0;i<N;i++){
-  const arm=i%4;
-  const base=arm*Math.PI/2;
-  const radius=.2+Math.pow(hash(i,5),.72)*6.2;
-  const angle=base+radius*.82+(hash(i,6)-.5)*.42;
-  const thick=(hash(i,7)-.5)*(.18+radius*.14);
-  galX[i]=Math.cos(angle)*(radius+thick);
-  galY[i]=Math.sin(angle)*(radius+thick)*.42;
-}
-
-/* Heart */
-const heartX=new Float32Array(N),heartY=new Float32Array(N);
-for(let i=0;i<N;i++){
-  const t=Math.PI*2*i/N;
-  heartX[i]=16*Math.sin(t)**3*.23;
-  heartY[i]=-(13*Math.cos(t)-5*Math.cos(2*t)-2*Math.cos(3*t)-Math.cos(4*t))*.23;
-}
-
-const bg=[];
-for(let i=0;i<420;i++){
-  bg.push({x:Math.random(),y:Math.random(),r:.25+Math.random()*1.15,
-    p:Math.random()*Math.PI*2,s:.5+Math.random()*1.5});
-}
-
-function background(now){
-  for(const q of bg){
-    const a=.16+.55*(.5+.5*Math.sin(now*.001*q.s+q.p));
-    ctx.globalAlpha=a;ctx.fillStyle="#fff";
-    ctx.beginPath();ctx.arc(q.x*W,q.y*H,q.r,0,Math.PI*2);ctx.fill();
-  }
-  ctx.globalAlpha=1;
-}
-
-function easeSmooth(p){
-  /* smoother than a simple quadratic; zero velocity at both ends */
-  return p*p*p*(p*(p*6-15)+10);
-}
-
-function sleep(ms){return new Promise(r=>setTimeout(r,ms))}
-
-function renderMorph(Ax,Ay,Bx,By,p,mode,rotation=0,scale=1){
-  const s=Math.min(W/5.8,H/(5.8*GH/GW))*scale;
-  const c=Math.cos(rotation),sn=Math.sin(rotation);
-
-  const bins=mode==="face"?10:6;
-  const paths=[];
-  for(let b=0;b<bins;b++)paths.push(new Path2D());
-
-  for(let i=0;i<N;i++){
-    let x=Ax[i]+(Bx[i]-Ax[i])*p;
-    let y=Ay[i]+(By[i]-Ay[i])*p;
-
-    if(rotation){
-      const rx=x*c-y*sn,ry=x*sn+y*c;x=rx;y=ry;
-    }
-
-    const px=W/2+x*s,py=H/2+y*s,r=size[i];
-    let b;
-    if(mode==="face") b=Math.min(bins-1,Math.floor(faceLum[i]/256*bins));
-    else b=i%bins;
-
-    paths[b].moveTo(px+r,py);
-    paths[b].arc(px,py,r,0,Math.PI*2);
-  }
-
-  for(let b=0;b<bins;b++){
-    if(mode==="face"){
-      const v=Math.round(35+b*(220/(bins-1)));
-      ctx.fillStyle=`rgb(${v},${v},${v})`;
-    }else if(mode==="heart"){
-      const colors=["#fff","#fff2f8","#ffd8e8","#ffb6d1","#ff8fbd","#ff6ba9"];
-      ctx.fillStyle=colors[b];
-    }else{
-      const colors=["#fff","#edf2ff","#c7d5ff","#b1c4ff","#fff0f8","#d9e7ff"];
-      ctx.fillStyle=colors[b];
-    }
-    ctx.fill(paths[b]);
-  }
-}
-
-function reveal(){
- return new Promise(resolve=>{
-  const t0=performance.now(),dur=3000;
-  function frame(now){
-    const p=Math.min((now-t0)/dur,1),e=easeSmooth(p);
-    ctx.clearRect(0,0,W,H);background(now);
-    for(let i=0;i<N;i++){
-      ctx.globalAlpha=e*(.25+.75*(.5+.5*Math.sin(now*.002+phase[i])));
-      ctx.fillStyle="#fff";ctx.beginPath();
-      ctx.arc((skyX[i]/14+.5)*W,(skyY[i]/9+.5)*H,size[i],0,Math.PI*2);ctx.fill();
-    }
-    ctx.globalAlpha=1;
-    if(p<1)requestAnimationFrame(frame);else resolve();
-  }
-  requestAnimationFrame(frame);
-}
-
-function animate(Ax,Ay,Bx,By,duration,mode,rotationFn=()=>0,scale=1){
- return new Promise(resolve=>{
-  const t0=performance.now();
-  function frame(now){
-    const raw=Math.min((now-t0)/duration,1);
-    const p=easeSmooth(raw);
-    ctx.clearRect(0,0,W,H);background(now);
-    renderMorph(Ax,Ay,Bx,By,p,mode,rotationFn(p),scale);
-    if(raw<1)requestAnimationFrame(frame);else resolve();
-  }
-  requestAnimationFrame(frame);
- });
-}
-
-async function heartbeat(){
-  for(let k=0;k<3;k++){
-    await animate(heartX,heartY,heartX,heartY,260,"heart",()=>0,1.10);
-    await animate(heartX,heartY,heartX,heartY,420,"heart",()=>0,1.0);
-    await sleep(130);
-  }
-}
-
-async function run(){
-  start.style.display="none";
-  await sleep(1000);
-  await reveal();
-  await sleep(500);
-
-  /* Sky -> Galaxy: all particles shrink toward the SAME indexed galaxy points. */
-  await animate(skyX,skyY,galX,galY,4800,"gal",
-    p=>p*Math.PI*2.0,0.92);
-
-  await sleep(600);
-
-  /* Galaxy -> portrait: no new random points; exact 1:1 particle mapping. */
-  await animate(galX,galY,faceX,faceY,5200,"face",()=>0,1.0);
-
-  await sleep(3000);
-
-  await animate(faceX,faceY,heartX,heartY,4800,"heart",()=>0,1.0);
-
-  await heartbeat();
-
-  message.innerHTML=`
-    <div class="main">I like you.</div>
-    <div class="sub">That's all.<br>I just wanted you to know.</div>`;
-  message.style.opacity="1";
-}
-
-start.addEventListener("click",()=>{
-  run().catch(err=>{
-    console.error(err);
-    start.style.display="block";
-    alert("Animation error: "+err.message);
-  });
-});
-
-ctx.clearRect(0,0,W,H);background(performance.now());
-</script>
+                    // Tự động tạo link tải file về máy
+                    const blob = new Blob([fileContent], { type: 'text/javascript' });
+                    const url = URL.createObjectURL(blob);
+                    const a = document.createElement('a');
+                    a.href = url;
+                    a.download = 'pixelData.js';
+                    a.click();
+                    URL.revokeObjectURL(url);
+                };
+                img.src = event.target.result;
+            };
+            reader.readAsDataURL(file);
+        });
+    </script>
 </body>
 </html>
