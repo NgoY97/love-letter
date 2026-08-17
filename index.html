@@ -233,16 +233,21 @@ function createParticles(){
     }
 
 }
-function galaxyShape(i,n){
+function streamShape(i,n){
 
-    const t = i * 0.15;
+    const t = i/n;
 
-    const r = (i / n) * 8;
+    return{
 
-    return {
-        x: Math.cos(t) * r,
-        y: Math.sin(t) * r
+        x:
+        -8 +
+        t*16,
+
+        y:
+        Math.sin(t*10)*2
+
     };
+
 }
 function portraitShape(i,n){
 
@@ -500,14 +505,14 @@ async function run(){
 
     await animateShape(
         heartShape,
-        galaxyShape,
+        streamShape,
         4000
     );
 
     // Chân dung bằng sao
 
     await animateShape(
-        galaxyShape,
+        streamShape,
         portraitShape,
         5000
     );
