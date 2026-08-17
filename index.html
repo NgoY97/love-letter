@@ -56,4 +56,359 @@ canvas{
 
 #message{
     position:absolute;
-   
+    left:50%;
+    top:50%;
+    transform:translate(-50%,-50%);
+    width:min(90%,700px);
+    color:white;
+    text-align:center;
+    opacity:0;
+    transition:opacity 2s;
+
+    font-size:clamp(24px,3vw,38px);
+    line-height:1.7;
+
+    text-shadow:
+        0 0 12px rgba(255,255,255,.7),
+        0 0 30px rgba(255,255,255,.4);
+}
+
+.small{
+    display:block;
+    margin-top:15px;
+    font-size:.6em;
+    opacity:.8;
+}
+</style>
+</head>
+
+<body>
+
+<div id="scene">
+
+    <canvas id="canvas"></canvas>
+
+    <button id="start">START</button>
+
+    <div id="message"></div>
+
+</div>
+
+<script>
+
+const canvas=document.getElementById("canvas");
+const ctx=canvas.getContext("2d");
+
+const startButton=document.getElementById("start");
+const message=document.getElementById("message");
+
+let W,H;
+
+function resize(){
+    W=window.innerWidth;
+    H=window.innerHeight;
+
+    canvas.width=W;
+    canvas.height=H;
+}
+resize();
+
+window.addEventListener("resize",resize);
+
+const stars=[];
+
+for(let i=0;i<500;i++){
+
+    stars.push({
+        x:Math.random()*W,
+        y:Math.random()*H,
+        r:Math.random()*1.5,
+        phase:Math.random()*6.28
+    });
+
+}
+
+function drawStars(){
+
+    const now=performance.now();
+
+    for(const s of stars){
+
+        let a=.5+.5*Math.sin(now*0.001+s.phase);
+
+        ctx.fillStyle=`rgba(255,255,255,${a})`;
+
+        ctx.beginPath();
+        ctx.arc(s.x,s.y,s.r,0,Math.PI*2);
+        ctx.fill();
+    }
+
+}
+
+const particles=[];
+const flowerCenters=[];
+
+function createFlowers(){
+
+    flowerCenters.length=0;
+
+    for(let i=0;i<45;i++){
+
+        flowerCenters.push({
+
+            x:Math.random()*10-5,
+            y:Math.random()*6-3,
+            size:0.3+Math.random()*0.8
+
+        });
+
+    }
+
+}
+
+function createParticles(){
+
+    particles.length=0;
+
+    for(let i=0;i<2200;i++){
+
+        particles.push({
+
+            size:0.8+Math.random()*1.8,
+            phase:Math.random()*6.28
+
+        });
+
+    }
+
+}
+
+function flowerShape(i,n){
+
+    const flowerCount=flowerCenters.length;
+
+    const flower=flowerCenters[i%flowerCount];
+
+    const local=Math.floor(i/flowerCount);
+
+    const total=n/flowerCount;
+
+    const t=Math.PI*2*(local/total);
+
+    const r=flower.size*Math.cos(5*t)*0.45;
+
+    return{
+
+        x:flower.x+r*Math.cos(t),
+        y:flower.y+r*Math.sin(t)
+
+    };
+}
+
+function heartShape(i,n){
+
+    const t=Math.PI*2*i/n;
+
+    return{
+
+        x:(16*Math.sin(t)**3)*0.12,
+
+        y:(
+        -(13*Math.cos(t)
+        -5*Math.cos(2*t)
+        -2*Math.cos(3*t)
+        -Math.cos(4*t))
+        )*0.12
+
+    };
+}
+
+const colors=[
+"#ffd6e7",
+"#ffbad4",
+"#ff9ac3",
+"#ff6fad",
+"#fff3fa"
+];
+
+function drawMorph(from,to,progress){
+
+    const scale=Math.min(W,H)/3.5;
+
+    for(let i=0;i<particles.length;i++){
+
+        const a=from(i,particles.length);
+        const b=to(i,particles.length);
+
+        const xShape=
+            a.x*(1-progress)+
+            b.x*progress;
+
+        const yShape=
+            a.y*(1-progress)+
+            b.y*progress;
+
+        const x=W/2+xShape*scale;
+        const y=H/2+yShape*scale;
+
+        ctx.fillStyle=
+        colors[i%colors.length];
+
+        ctx.shadowBlur=14;
+        ctx.shadowColor=
+        colors[i%colors.length];
+
+        ctx.beginPath();
+
+        ctx.arc(
+            x,
+            y,
+            particles[i].size,
+            0,
+            Math.PI*2
+        );
+
+        ctx.fill();
+    }
+
+    ctx.shadowBlur=0;
+}
+
+function sleep(ms){
+    return new Promise(
+        r=>setTimeout(r,ms)
+    );
+}
+
+function animateFlowers(){
+
+    return new Promise(resolve=>{
+
+        const startTime=performance.now();
+
+        function frame(now){
+
+            let p=Math.min(
+                (now-startTime)/7000,
+                1
+            );
+
+            ctx.clearRect(0,0,W,H);
+
+            drawStars();
+
+            drawMorph(
+                flowerShape,
+                flowerShape,
+                p
+            );
+
+            if(p<1){
+                requestAnimationFrame(frame);
+            }else{
+                resolve();
+            }
+        }
+
+        requestAnimationFrame(frame);
+
+    });
+
+}
+
+function animateHeart(){
+
+    return new Promise(resolve=>{
+
+        const startTime=performance.now();
+
+        function frame(now){
+
+            let p=Math.min(
+                (now-startTime)/5000,
+                1
+            );
+
+            ctx.clearRect(0,0,W,H);
+
+            drawStars();
+
+            drawMorph(
+                flowerShape,
+                heartShape,
+                p
+            );
+
+            if(p<1){
+                requestAnimationFrame(frame);
+            }else{
+                resolve();
+            }
+
+        }
+
+        requestAnimationFrame(frame);
+
+    });
+
+}
+
+function showMessage(text){
+
+    message.innerHTML=text;
+    message.style.opacity=1;
+
+}
+
+function hideMessage(){
+
+    message.style.opacity=0;
+
+}
+
+async function run(){
+
+    startButton.style.display="none";
+
+    createFlowers();
+    createParticles();
+
+    await animateFlowers();
+
+    await sleep(1000);
+
+    await animateHeart();
+
+    await sleep(1000);
+
+    showMessage(`
+        Some things are easier to create than to say.
+        <span class="small">
+        So I'll just say it.
+        </span>
+    `);
+
+    await sleep(4000);
+
+    hideMessage();
+
+    await sleep(2000);
+
+    showMessage(`
+        I like you.
+        <span class="small">
+        That's all. I just wanted you to know.
+        </span>
+    `);
+
+}
+
+startButton.addEventListener(
+    "click",
+    run
+);
+
+</script>
+
+</body>
+</html>
