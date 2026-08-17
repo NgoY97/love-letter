@@ -24,74 +24,67 @@ html,body{
     width:100%;
     height:100%;
     position:relative;
-
     background:
-    radial-gradient(
-        circle at center,
-        #121d3f 0%,
-        #050713 60%,
-        #010207 100%
-    );
+        radial-gradient(
+            circle at center,
+            #101a38 0%,
+            #050713 55%,
+            #010207 100%
+        );
 }
 
 canvas{
     position:absolute;
     inset:0;
+    width:100%;
+    height:100%;
 }
 
 #start{
-  position:absolute;
-  left:50%;
-  top:50%;
-  transform:translate(-50%,-50%);
-  width:100px;
-  height:100px;
-  border-radius:50%;
-  border:none;
-  background:rgba(255,105,180,.2);
-  backdrop-filter:blur(10px);
-  font-size:48px;
-  cursor:pointer;
-  box-shadow:0 0 25px hotpink;
-  animation:heartbeat 1.2s infinite;
+    position:absolute;
+    left:50%;
+    top:50%;
+    transform:translate(-50%,-50%);
+    width:100px;
+    height:100px;
+    border-radius:50%;
+    border:none;
+    background:rgba(255,105,180,.18);
+    backdrop-filter:blur(10px);
+    font-size:48px;
+    cursor:pointer;
+    box-shadow:
+        0 0 25px #ff69b4,
+        0 0 60px rgba(255,105,180,.5);
+    animation:heartbeat 1.2s infinite;
+    z-index:20;
 }
+
 @keyframes heartbeat{
 
-  0%{
-    transform:
-      translate(-50%,-50%)
-      scale(1);
-  }
+    0%{
+        transform:translate(-50%,-50%) scale(1);
+    }
 
-  15%{
-    transform:
-      translate(-50%,-50%)
-      scale(1.15);
-  }
+    15%{
+        transform:translate(-50%,-50%) scale(1.15);
+    }
 
-  30%{
-    transform:
-      translate(-50%,-50%)
-      scale(1);
-  }
+    30%{
+        transform:translate(-50%,-50%) scale(1);
+    }
 
-  45%{
-    transform:
-      translate(-50%,-50%)
-      scale(1.12);
-  }
+    45%{
+        transform:translate(-50%,-50%) scale(1.12);
+    }
 
-  60%{
-    transform:
-      translate(-50%,-50%)
-      scale(1);
-  }
+    60%{
+        transform:translate(-50%,-50%) scale(1);
+    }
 
-  100%{
-    transform:
-      translate(-50%,-50%)
-      scale(1);
-  }
+    100%{
+        transform:translate(-50%,-50%) scale(1);
+    }
 }
 
 #message{
@@ -104,7 +97,8 @@ canvas{
     opacity:0;
     transition:opacity 2s ease;
     pointer-events:none;
-    z-index:10;
+    z-index:30;
+    width:90%;
 }
 
 #message .main{
@@ -113,21 +107,14 @@ canvas{
 
     text-shadow:
         0 0 10px white,
-        0 0 25px hotpink,
-        0 0 50px hotpink;
+        0 0 25px #ff8fbd,
+        0 0 50px #ff5fa8;
 }
 
 #message .sub{
     margin-top:10px;
     font-size:clamp(14px,1.5vw,22px);
-}
-
-
-.small{
-    display:block;
-    margin-top:15px;
-    font-size:.6em;
-    opacity:.8;
+    line-height:1.5;
 }
 </style>
 </head>
@@ -144,418 +131,1216 @@ canvas{
 
 </div>
 
+
 <script>
 
-const canvas=document.getElementById("canvas");
-const ctx=canvas.getContext("2d");
+/* =========================================================
+   CANVAS
+========================================================= */
 
-const startButton=document.getElementById("start");
-const message=document.getElementById("message");
+const canvas =
+    document.getElementById("canvas");
 
-let W,H;
+const ctx =
+    canvas.getContext("2d");
+
+const startButton =
+    document.getElementById("start");
+
+const message =
+    document.getElementById("message");
+
+let W = 0;
+let H = 0;
 
 function resize(){
-    W=window.innerWidth;
-    H=window.innerHeight;
 
-    canvas.width=W;
-    canvas.height=H;
+    W = window.innerWidth;
+    H = window.innerHeight;
+
+    canvas.width = W;
+    canvas.height = H;
 }
+
 resize();
 
-window.addEventListener("resize",resize);
+window.addEventListener(
+    "resize",
+    resize
+);
 
-const stars=[];
 
-for(let i=0;i<500;i++){
+/* =========================================================
+   BACKGROUND STARS
+========================================================= */
 
-    stars.push({
-        x:Math.random()*W,
-        y:Math.random()*H,
-        r:Math.random()*1.5,
-        phase:Math.random()*6.28
+const backgroundStars = [];
+
+for(let i=0;i<750;i++){
+
+    backgroundStars.push({
+
+        x:Math.random(),
+        y:Math.random(),
+
+        size:
+            .3 +
+            Math.random()*1.5,
+
+        phase:
+            Math.random()*Math.PI*2,
+
+        speed:
+            .5 +
+            Math.random()*2
+
     });
-
 }
 
-function drawStars(){
 
-    const now=performance.now();
-
-    for(const s of stars){
-
-        let a=.5+.5*Math.sin(now*0.001+s.phase);
-
-        ctx.fillStyle=`rgba(255,255,255,${a})`;
-
-        ctx.beginPath();
-        ctx.arc(s.x,s.y,s.r,0,Math.PI*2);
-        ctx.fill();
-    }
-
-}
-
-const particles=[];
-const flowerCenters=[];
-
-function createFlowers(){
-
-    flowerCenters.length=0;
-
-    for(let i=0;i<120;i++){
-
-        flowerCenters.push({
-
-            x:Math.random()*14-7,
-            y:Math.random()*8-4,
-
-            size:0.15+Math.random()*1.2
-
-        });
-
-    }
-
-}
-
-function createParticles(){
-
-    particles.length=0;
-
-    for(let i=0;i<4500;i++){
-
-        particles.push({
-
-            size:0.6+Math.random()*2.2,
-            phase:Math.random()*6.28
-
-        });
-
-    }
-
-}
-function streamShape(i, n) {
-    const t = i / n;
-
-    // Trải từ trái sang phải
-    const x = -8 + t * 16;
-
-    // Trục cong của Ngân Hà
-    const center = Math.sin(t * Math.PI * 1.4) * 1.0;
-
-    // Độ dày của Ngân Hà
-    // Phần lớn sao tập trung gần trung tâm
-    const spread = (Math.random() + Math.random() - 1) * 1.8;
-
-    // Các nhánh xoắn
-    const spiral =
-        Math.sin(t * Math.PI * 10 + spread * 2.5) *
-        (0.25 + Math.abs(spread) * 0.15);
-
-    // Một chút nhiễu tự nhiên
-    const noise = (Math.random() - 0.5) * 0.25;
-
-    return {
-        x: x,
-        y: center + spread + spiral + noise
-    };
-}
-function portraitShape(i,n){
-
-    const t = i / n;
-
-    // viền mặt
-    if(t < 0.45){
-
-        const a = (t / 0.45) * Math.PI * 2;
-
-        return{
-            x: Math.cos(a) * 1.6,
-            y: Math.sin(a) * 2.1
-        };
-    }
-
-    // kính trái
-    if(t < 0.60){
-
-        const a =
-        ((t - 0.45) / 0.15) *
-        Math.PI * 2;
-
-        return{
-            x: -0.65 + Math.cos(a) * 0.45,
-            y: -0.25 + Math.sin(a) * 0.35
-        };
-    }
-
-    // kính phải
-    if(t < 0.75){
-
-        const a =
-        ((t - 0.60) / 0.15) *
-        Math.PI * 2;
-
-        return{
-            x: 0.65 + Math.cos(a) * 0.45,
-            y: -0.25 + Math.sin(a) * 0.35
-        };
-    }
-
-    // cầu kính
-    if(t < 0.82){
-
-        const p = (t - 0.75) / 0.07;
-
-        return{
-            x: -0.2 + p * 0.4,
-            y: -0.25
-        };
-    }
-
-    // vai vest
-    const p = (t - 0.82) / 0.18;
-
-    return{
-        x: (p * 5) - 2.5,
-        y: 2.4 - Math.abs(p - 0.5)
-    };
-}
-
-function heartShape(i,n){
-
-    const t = Math.PI*2*i/n;
-
-    return{
-
-        x:(16*Math.sin(t)**3)*0.22,
-
-        y:(
-        -(13*Math.cos(t)
-        -5*Math.cos(2*t)
-        -2*Math.cos(3*t)
-        -Math.cos(4*t))
-        )*0.22
-    };
-}
-async function heartBeat(){
-
-    for(let k=0;k<3;k++){
-
-        await animateShape(
-            heartShape,
-            heartShape,
-            400
-        );
-
-        await sleep(300);
-
-    }
-}
-
-const colors=[
-"#ffd6e7",
-"#ffbad4",
-"#ff9ac3",
-"#ff6fad",
-"#fff3fa"
-];
-
-function drawMorph(from,to,progress){
-
-    const scale=Math.min(W,H)/3.5;
-
-    for(let i=0;i<particles.length;i++){
-
-        const a=from(i,particles.length);
-        const b=to(i,particles.length);
-
-        const xShape=
-            a.x*(1-progress)+
-            b.x*progress;
-
-        const yShape=
-            a.y*(1-progress)+
-            b.y*progress;
-
-        const x=W/2+xShape*scale;
-        const y=H/2+yShape*scale;
-
-        ctx.fillStyle=
-        colors[i%colors.length];
-
-        ctx.shadowBlur=14;
-        ctx.shadowColor=
-        colors[i%colors.length];
+function drawBackgroundStars(){
+
+    const now =
+        performance.now();
+
+    for(const s of backgroundStars){
+
+        const alpha =
+            .25 +
+            .75 *
+            (
+                .5 +
+                .5 *
+                Math.sin(
+                    now*.001*s.speed+
+                    s.phase
+                )
+            );
+
+        ctx.fillStyle =
+            `rgba(255,255,255,${alpha})`;
 
         ctx.beginPath();
 
         ctx.arc(
-            x,
-            y,
-            particles[i].size,
+            s.x*W,
+            s.y*H,
+            s.size,
             0,
             Math.PI*2
         );
 
         ctx.fill();
     }
+}
+
+
+/* =========================================================
+   PARTICLES
+========================================================= */
+
+const particles = [];
+
+const PARTICLE_COUNT = 5000;
+
+
+function seed(i){
+
+    const x =
+        Math.sin(i*127.1+17.7)
+        *43758.5453;
+
+    return x -
+        Math.floor(x);
+}
+
+
+function createParticles(){
+
+    particles.length = 0;
+
+    for(let i=0;i<PARTICLE_COUNT;i++){
+
+        particles.push({
+
+            size:
+                .45 +
+                seed(i*3+1)*1.6,
+
+            phase:
+                seed(i*3+2)
+                *Math.PI*2,
+
+            x:
+                seed(i*5+3),
+
+            y:
+                seed(i*5+4),
+
+            z:
+                seed(i*5+5)
+
+        });
+    }
+}
+
+
+/* =========================================================
+   GALAXY
+========================================================= */
+
+const galaxyPoints = [];
+
+
+function createGalaxy(){
+
+    galaxyPoints.length = 0;
+
+    for(let i=0;i<PARTICLE_COUNT;i++){
+
+        const arm =
+            i % 5;
+
+        const armAngle =
+            arm *
+            (Math.PI*2/5);
+
+        const radius =
+            .15 +
+            Math.pow(
+                seed(i*11+4),
+                .65
+            ) * 6;
+
+        const angle =
+            armAngle +
+            radius*.85 +
+            (
+                seed(i*13+7)-.5
+            )*.65;
+
+        const thickness =
+            (
+                seed(i*17+8)-.5
+            ) *
+            (.25+radius*.18);
+
+        let x =
+            Math.cos(angle) *
+            (radius+thickness);
+
+        let y =
+            Math.sin(angle) *
+            (radius+thickness)
+            *.48;
+
+        const core =
+            Math.exp(-radius*.5);
+
+        x *=
+            1-core*.15;
+
+        y *=
+            1-core*.15;
+
+        galaxyPoints.push({
+            x:x,
+            y:y
+        });
+    }
+}
+
+createGalaxy();
+
+
+function galaxyShape(i){
+
+    return galaxyPoints[i];
+}
+
+
+/* =========================================================
+   SKY SHAPE
+========================================================= */
+
+function skyShape(i){
+
+    const p =
+        particles[i];
+
+    return {
+
+        x:
+            (p.x-.5)
+            *14,
+
+        y:
+            (p.y-.5)
+            *9
+
+    };
+}
+
+
+/* =========================================================
+   PORTRAIT
+   Based on the uploaded reference:
+   - short dark hair
+   - glasses
+   - oval face
+   - shirt
+   - tie
+   - dark suit
+========================================================= */
+
+function portraitShape(i){
+
+    const t =
+        i/PARTICLE_COUNT;
+
+    /*
+      0 - 35%
+      FACE
+    */
+
+    if(t < .35){
+
+        const a =
+            (t/.35)
+            *Math.PI*2;
+
+        const rx =
+            1.72;
+
+        const ry =
+            2.25;
+
+        return {
+
+            x:
+                Math.cos(a)
+                *rx,
+
+            y:
+                Math.sin(a)
+                *ry
+                -.25
+
+        };
+    }
+
+
+    /*
+      35 - 48%
+      HAIR
+    */
+
+    if(t < .48){
+
+        const p =
+            (t-.35)/.13;
+
+        const a =
+            Math.PI +
+            p*Math.PI;
+
+        return {
+
+            x:
+                Math.cos(a)
+                *1.72,
+
+            y:
+                -1.65 +
+                Math.sin(a)
+                *.85
+
+        };
+    }
+
+
+    /*
+      48 - 58%
+      LEFT GLASSES
+    */
+
+    if(t < .58){
+
+        const p =
+            (t-.48)/.10;
+
+        const a =
+            p*Math.PI*2;
+
+        return {
+
+            x:
+                -.68 +
+                Math.cos(a)*.52,
+
+            y:
+                -.25 +
+                Math.sin(a)*.38
+
+        };
+    }
+
+
+    /*
+      58 - 68%
+      RIGHT GLASSES
+    */
+
+    if(t < .68){
+
+        const p =
+            (t-.58)/.10;
+
+        const a =
+            p*Math.PI*2;
+
+        return {
+
+            x:
+                .68 +
+                Math.cos(a)*.52,
+
+            y:
+                -.25 +
+                Math.sin(a)*.38
+
+        };
+    }
+
+
+    /*
+      68 - 73%
+      GLASSES BRIDGE
+    */
+
+    if(t < .73){
+
+        const p =
+            (t-.68)/.05;
+
+        return {
+
+            x:
+                -.55+p*1.1,
+
+            y:
+                -.25
+
+        };
+    }
+
+
+    /*
+      73 - 78%
+      NOSE
+    */
+
+    if(t < .78){
+
+        const p =
+            (t-.73)/.05;
+
+        return {
+
+            x:
+                .05+
+
+                Math.sin(p*Math.PI)
+                *.18,
+
+            y:
+                .05+
+                p*.45
+
+        };
+    }
+
+
+    /*
+      78 - 82%
+      MOUTH
+    */
+
+    if(t < .82){
+
+        const p =
+            (t-.78)/.04;
+
+        const a =
+            p*Math.PI;
+
+        return {
+
+            x:
+                -.42+
+                p*.84,
+
+            y:
+                .78+
+                Math.sin(a)*.08
+
+        };
+    }
+
+
+    /*
+      82 - 88%
+      NECK / SHIRT
+    */
+
+    if(t < .88){
+
+        const p =
+            (t-.82)/.06;
+
+        return {
+
+            x:
+                -.65+
+                p*1.3,
+
+            y:
+                2.0+
+                Math.sin(p*Math.PI)
+                *.2
+
+        };
+    }
+
+
+    /*
+      88 - 94%
+      TIE
+    */
+
+    if(t < .94){
+
+        const p =
+            (t-.88)/.06;
+
+        return {
+
+            x:
+                Math.sin(p*Math.PI)
+                *.18,
+
+            y:
+                2.05+
+                p*1.25
+
+        };
+    }
+
+
+    /*
+      94 - 100%
+      SUIT / SHOULDERS
+    */
+
+    const p =
+        (t-.94)/.06;
+
+    return {
+
+        x:
+            -2.8+
+            p*5.6,
+
+        y:
+            2.75+
+            Math.abs(p-.5)*.7
+
+    };
+}
+
+
+/* =========================================================
+   HEART
+========================================================= */
+
+function heartShape(i){
+
+    const t =
+        Math.PI*2*
+        i/PARTICLE_COUNT;
+
+    return {
+
+        x:
+            16*
+            Math.pow(
+                Math.sin(t),
+                3
+            )*.18,
+
+        y:
+            -(
+                13*Math.cos(t)
+                -
+                5*Math.cos(2*t)
+                -
+                2*Math.cos(3*t)
+                -
+                Math.cos(4*t)
+            )*.18
+
+    };
+}
+
+
+/* =========================================================
+   COLORS
+========================================================= */
+
+const galaxyColors = [
+
+    "#ffffff",
+    "#dce8ff",
+    "#b9c9ff",
+    "#ffd8ed",
+    "#fff0f8",
+    "#9bb6ff"
+
+];
+
+
+const portraitColors = [
+
+    "#fff7f7",
+    "#efdfe0",
+    "#d6b5b7",
+    "#b47e83",
+    "#704e52",
+    "#30364a",
+    "#59647a",
+    "#d9e0e8",
+    "#f0a8b5"
+
+];
+
+
+const heartColors = [
+
+    "#ffffff",
+    "#fff2f8",
+    "#ffd8e8",
+    "#ffb6d1",
+    "#ff8fbd",
+    "#ff6ba9"
+
+];
+
+
+function galaxyColor(i){
+
+    return galaxyColors[
+        i%galaxyColors.length
+    ];
+}
+
+
+function portraitColor(i){
+
+    /*
+      Dark particles are distributed
+      to create hair / glasses / suit.
+    */
+
+    const p =
+        i/PARTICLE_COUNT;
+
+    if(
+        (p>=.35 && p<.48) ||
+        (p>=.58 && p<.68) ||
+        (p>=.88)
+    ){
+
+        return portraitColors[
+            4+
+            (i%4)
+        ];
+    }
+
+    return portraitColors[
+        i%4
+    ];
+}
+
+
+function heartColor(i){
+
+    return heartColors[
+        i%heartColors.length
+    ];
+}
+
+
+/* =========================================================
+   SCALE
+========================================================= */
+
+function getScale(){
+
+    return Math.min(
+        W/4.6,
+        H/7
+    );
+}
+
+
+/* =========================================================
+   PARTICLE DRAW
+========================================================= */
+
+function drawParticle(
+    x,
+    y,
+    size,
+    color,
+    alpha
+){
+
+    ctx.globalAlpha =
+        alpha;
+
+    ctx.fillStyle =
+        color;
+
+    ctx.shadowBlur =
+        5+size*4;
+
+    ctx.shadowColor =
+        color;
+
+    ctx.beginPath();
+
+    ctx.arc(
+        x,
+        y,
+        size,
+        0,
+        Math.PI*2
+    );
+
+    ctx.fill();
+
+    ctx.globalAlpha=1;
+}
+
+
+/* =========================================================
+   MORPH
+========================================================= */
+
+function drawMorph(
+    from,
+    to,
+    progress,
+    options={}
+){
+
+    const baseScale =
+        getScale();
+
+    const scale =
+        baseScale *
+        (
+            options.scale ||
+            1
+        );
+
+    const rotation =
+        options.rotation ||
+        0;
+
+    const colorFunction =
+        options.colorFunction ||
+        (()=>"#ffffff");
+
+    for(
+        let i=0;
+        i<PARTICLE_COUNT;
+        i++
+    ){
+
+        const a =
+            from(i);
+
+        const b =
+            to(i);
+
+        let x =
+            a.x*(1-progress)+
+            b.x*progress;
+
+        let y =
+            a.y*(1-progress)+
+            b.y*progress;
+
+
+        /*
+          ROTATION
+        */
+
+        if(rotation!==0){
+
+            const cos =
+                Math.cos(rotation);
+
+            const sin =
+                Math.sin(rotation);
+
+            const rx =
+                x*cos-y*sin;
+
+            const ry =
+                x*sin+y*cos;
+
+            x=rx;
+            y=ry;
+        }
+
+
+        /*
+          SCREEN POSITION
+        */
+
+        const sx =
+            W/2+x*scale;
+
+        const sy =
+            H/2+y*scale;
+
+
+        drawParticle(
+
+            sx,
+
+            sy,
+
+            particles[i].size,
+
+            colorFunction(i),
+
+            options.alpha===undefined
+            ?1
+            :options.alpha
+
+        );
+    }
 
     ctx.shadowBlur=0;
 }
 
-function sleep(ms){
-    return new Promise(
-        r=>setTimeout(r,ms)
-    );
-}
 
-function animateShape(from,to,duration){
+/* =========================================================
+   SHOW SKY PARTICLES
+========================================================= */
+
+function revealStars(){
 
     return new Promise(resolve=>{
 
-        const startTime =
-        performance.now();
+        const start =
+            performance.now();
+
+        const duration =
+            3200;
+
 
         function frame(now){
 
-            const p = Math.min(
-                (now-startTime)/duration,
-                1
+            const p =
+                Math.min(
+                    (now-start)/duration,
+                    1
+                );
+
+            const ease =
+                1-
+                Math.pow(
+                    1-p,
+                    3
+                );
+
+
+            ctx.clearRect(
+                0,
+                0,
+                W,
+                H
             );
 
-            ctx.clearRect(0,0,W,H);
+            drawBackgroundStars();
 
-            drawStars();
 
-            drawMorph(
-                from,
-                to,
-                p
-            );
+            for(
+                let i=0;
+                i<PARTICLE_COUNT;
+                i++
+            ){
 
-            if(p < 1){
+                const s =
+                    particles[i];
 
-                requestAnimationFrame(frame);
+                const alpha =
+                    ease*
+                    (
+                        .2+
+                        .8*
+                        (
+                            .5+
+                            .5*
+                            Math.sin(
+                                now*.002+
+                                s.phase
+                            )
+                        )
+                    );
 
-            }else{
+                drawParticle(
 
-                resolve();
+                    s.x*W,
 
+                    s.y*H,
+
+                    s.size,
+
+                    "#ffffff",
+
+                    alpha
+
+                );
             }
-        }
 
-        requestAnimationFrame(frame);
-
-    });
-
-}
-
-function animateHeart(){
-
-    return new Promise(resolve=>{
-
-        const startTime=performance.now();
-
-        function frame(now){
-
-            let p=Math.min(
-                (now-startTime)/5000,
-                1
-            );
-
-            ctx.clearRect(0,0,W,H);
-
-            drawStars();
-
-            drawMorph(
-                flowerShape,
-                heartShape,
-                p
-            );
 
             if(p<1){
-                requestAnimationFrame(frame);
+
+                requestAnimationFrame(
+                    frame
+                );
+
             }else{
+
                 resolve();
             }
-
         }
 
-        requestAnimationFrame(frame);
-
+        requestAnimationFrame(
+            frame
+        );
     });
-
 }
 
-function showMessage(text){
 
-    message.innerHTML=text;
-    message.style.opacity=1;
+/* =========================================================
+   SKY -> GALAXY
+========================================================= */
 
+function animateGalaxy(){
+
+    return new Promise(resolve=>{
+
+        const start =
+            performance.now();
+
+        const duration =
+            5200;
+
+
+        function frame(now){
+
+            const p =
+                Math.min(
+                    (now-start)/duration,
+                    1
+                );
+
+
+            const ease =
+                p<.5
+                ?2*p*p
+                :1-
+                 Math.pow(
+                    -2*p+2,
+                    2
+                 )/2;
+
+
+            ctx.clearRect(
+                0,
+                0,
+                W,
+                H
+            );
+
+            drawBackgroundStars();
+
+
+            /*
+              Stars shrink toward
+              the galaxy while rotating.
+            */
+
+            const rotation =
+                ease*
+                Math.PI*
+                2.3;
+
+
+            drawMorph(
+
+                skyShape,
+
+                galaxyShape,
+
+                ease,
+
+                {
+
+                    rotation:
+                        rotation,
+
+                    colorFunction:
+                        galaxyColor
+
+                }
+
+            );
+
+
+            if(p<1){
+
+                requestAnimationFrame(
+                    frame
+                );
+
+            }else{
+
+                resolve();
+            }
+        }
+
+        requestAnimationFrame(
+            frame
+        );
+    });
 }
 
-function hideMessage(){
 
-    message.style.opacity=0;
+/* =========================================================
+   GENERIC ANIMATION
+========================================================= */
 
+function animateShape(
+    from,
+    to,
+    duration,
+    options={}
+){
+
+    return new Promise(resolve=>{
+
+        const start =
+            performance.now();
+
+
+        function frame(now){
+
+            const p =
+                Math.min(
+                    (now-start)/duration,
+                    1
+                );
+
+
+            const ease =
+                p<.5
+                ?2*p*p
+                :1-
+                 Math.pow(
+                    -2*p+2,
+                    2
+                 )/2;
+
+
+            ctx.clearRect(
+                0,
+                0,
+                W,
+                H
+            );
+
+            drawBackgroundStars();
+
+
+            drawMorph(
+
+                from,
+
+                to,
+
+                ease,
+
+                options
+
+            );
+
+
+            if(p<1){
+
+                requestAnimationFrame(
+                    frame
+                );
+
+            }else{
+
+                resolve();
+            }
+        }
+
+        requestAnimationFrame(
+            frame
+        );
+    });
 }
 
-async function run(){
 
-    startButton.style.display="none";
+/* =========================================================
+   HEART BEAT
+========================================================= */
 
-    createParticles();
+async function heartBeat(){
 
-    // Sao trời
-
-    drawStars();
-
-    await sleep(2500);
-
-    // Thiên hà
+    /*
+      First beat
+    */
 
     await animateShape(
         heartShape,
-        streamShape,
-        4000
-    );
-
-    // Chân dung bằng sao
-
-    await animateShape(
-        streamShape,
-        portraitShape,
-        5000
-    );
-
-    await sleep(4000);
-
-    // Chân dung thành trái tim
-
-    await animateShape(
-        portraitShape,
         heartShape,
-        5000
+        380,
+        {
+            scale:1
+        }
     );
 
-    await heartBeat();
+    await animateShape(
+        heartShape,
+        heartShape,
+        220,
+        {
+            scale:1.15
+        }
+    );
+
+    await animateShape(
+        heartShape,
+        heartShape,
+        300,
+        {
+            scale:1
+        }
+    );
+
+
+    await sleep(180);
+
+
+    /*
+      Second beat
+    */
+
+    await animateShape(
+        heartShape,
+        heartShape,
+        220,
+        {
+            scale:1.12
+        }
+    );
+
+    await animateShape(
+        heartShape,
+        heartShape,
+        300,
+        {
+            scale:1
+        }
+    );
+
+
+    await sleep(220);
+
+
+    /*
+      Third beat
+    */
+
+    await animateShape(
+        heartShape,
+        heartShape,
+        220,
+        {
+            scale:1.10
+        }
+    );
+
+    await animateShape(
+        heartShape,
+        heartShape,
+        350,
+        {
+            scale:1
+        }
+    );
+}
+
+
+/* =========================================================
+   SLEEP
+========================================================= */
+
+function sleep(ms){
+
+    return new Promise(
+        resolve =>
+            setTimeout(
+                resolve,
+                ms
+            )
+    );
+}
+
+
+/* =========================================================
+   MESSAGE
+========================================================= */
+
+function showMessage(){
 
     message.innerHTML = `
-      <div class="main">I like you.</div>
-      <div class="sub">
-        That's all.<br>
-        I just wanted you to know.
-      </div>
+
+        <div class="main">
+            I like you.
+        </div>
+
+        <div class="sub">
+            That's all.<br>
+            I just wanted you to know.
+        </div>
+
     `;
 
-    message.style.opacity = 1;
+    message.style.opacity=1;
 }
 
-startButton.addEventListener(
-    "click",
-    run
-);
 
-</script>
-
-</body>
-</html>
+/* =========================================================
+   MAIN STORY
+====================================================
