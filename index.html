@@ -1,367 +1,59 @@
-<!doctype html>
+<!DOCTYPE html>
 <html lang="en">
 <head>
-<meta charset="utf-8">
-<meta name="viewport" content="width=device-width,initial-scale=1">
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>A Little Thing For You</title>
 
 <style>
-:root{
-  --bg:#02030a;
-}
-
 *{
-  box-sizing:border-box;
+    margin:0;
+    padding:0;
+    box-sizing:border-box;
 }
 
 html,body{
-  margin:0;
-  width:100%;
-  height:100%;
-  overflow:hidden;
-  background:var(--bg);
-}
-
-body{
-  font-family:Georgia,"Times New Roman",serif;
+    width:100%;
+    height:100%;
+    overflow:hidden;
+    background:#02030a;
+    font-family:Georgia,serif;
 }
 
 #scene{
-  position:relative;
-  width:100%;
-  height:100%;
-  background:
-  radial-gradient(
-    circle at 50% 45%,
-    #11182f 0%,
-    #050713 45%,
-    #010207 100%
-  );
+    width:100%;
+    height:100%;
+    position:relative;
+
+    background:
+    radial-gradient(
+        circle at center,
+        #121d3f 0%,
+        #050713 60%,
+        #010207 100%
+    );
 }
 
 canvas{
-  position:absolute;
-  inset:0;
-  width:100%;
-  height:100%;
+    position:absolute;
+    inset:0;
 }
 
 #start{
-  position:absolute;
-  left:50%;
-  top:50%;
-  transform:translate(-50%,-50%);
-  padding:14px 34px;
-  border:1px solid rgba(255,255,255,.55);
-  border-radius:999px;
-  background:rgba(255,255,255,.08);
-  color:#fff;
-  letter-spacing:4px;
-  font-size:13px;
-  cursor:pointer;
-  backdrop-filter:blur(8px);
-}
-
-#start:hover{
-  background:rgba(255,255,255,.15);
+    position:absolute;
+    left:50%;
+    top:50%;
+    transform:translate(-50%,-50%);
+    padding:14px 35px;
+    border-radius:999px;
+    border:1px solid rgba(255,255,255,.5);
+    background:rgba(255,255,255,.08);
+    color:white;
+    cursor:pointer;
+    letter-spacing:3px;
+    z-index:10;
 }
 
 #message{
-  position:absolute;
-  left:50%;
-  top:50%;
-  transform:translate(-50%,-50%);
-  width:min(90%,720px);
-  text-align:center;
-  color:#fff;
-  opacity:0;
-  font-size:clamp(20px,3vw,34px);
-  line-height:1.8;
-  transition:opacity 2s ease;
-  text-shadow:0 0 30px rgba(255,255,255,.4);
-}
-
-#message .small{
-  display:block;
-  margin-top:18px;
-  font-size:.6em;
-  opacity:.85;
-}
-</style>
-
-</head>
-<body>
-
-<div id="scene">
-
-  <canvas id="canvas"></canvas>
-
-  <button id="start">
-    START
-  </button>
-
-  <div id="message"></div>
-
-</div>
-
-<script>
-
-const SETTINGS={
-  flowerDuration:8000,
-  heartDuration:6000,
-  textHold:4000,
-  particles:2500,
-  stars:700
-};
-
-const TEXT={
-  first:"Some things are easier to create than to say.",
-  second:"So I'll just say it.",
-  final:"I like you.",
-  finalSmall:"That's all. I just wanted you to know."
-};
-
-const canvas=document.getElementById("canvas");
-const ctx=canvas.getContext("2d");
-
-const start=document.getElementById("start");
-const message=document.getElementById("message");
-
-let W=0;
-let H=0;
-let DPR=1;
-
-let stars=[];
-let particles=[];
-let flowerCenters=[];
-
-function resize(){
-
-  DPR=Math.min(window.devicePixelRatio||1,2);
-
-  W=window.innerWidth;
-  H=window.innerHeight;
-
-  canvas.width=W*DPR;
-  canvas.height=H*DPR;
-
-  canvas.style.width=W+"px";
-  canvas.style.height=H+"px";
-
-  ctx.setTransform(DPR,0,0,DPR,0,0);
-}
-
-window.addEventListener("resize",resize);
-resize();
-
-function rand(min,max){
-  return min+Math.random()*(max-min);
-}
-
-function ease(t){
-  return t<0.5
-  ?2*t*t
-  :1-Math.pow(-2*t+2,2)/2;
-}
-
-function sleep(ms){
-  return new Promise(r=>setTimeout(r,ms));
-}
-
-/* ---------- STARS ---------- */
-
-function createStars(){
-
-  stars=[];
-
-  for(let i=0;i<SETTINGS.stars;i++){
-
-    stars.push({
-
-      x:Math.random()*W,
-      y:Math.random()*H,
-
-      r:rand(.2,1.6),
-
-      alpha:rand(.2,.9),
-
-      phase:Math.random()*6.28
-
-    });
-  }
-}
-
-createStars();
-
-function drawStars(alpha=1){
-
-  const now=performance.now();
-
-  for(const s of stars){
-
-    const twinkle=
-    .7+.3*Math.sin(now/800+s.phase);
-
-    ctx.fillStyle=
-    `rgba(255,255,255,${
-      s.alpha*twinkle*alpha
-    })`;
-
-    ctx.beginPath();
-    ctx.arc(
-      s.x,
-      s.y,
-      s.r,
-      0,
-      Math.PI*2
-    );
-    ctx.fill();
-  }
-}
-
-/* ---------- FLOWERS ---------- */
-
-function createFlowerField(){
-
-  flowerCenters=[];
-
-  for(let i=0;i<55;i++){
-
-    flowerCenters.push({
-
-      x:rand(-4.8,4.8),
-      y:rand(-3.2,3.2),
-      size:rand(0.4,1.6)
-
-    });
-
-  }
-}
-
-function initParticles(){
-
-  particles=[];
-
-  for(let i=0;i<SETTINGS.particles;i++){
-
-    particles.push({
-
-      size:rand(.8,2.2),
-
-      phase:
-      Math.random()*Math.PI*2
-
-    });
-
-  }
-}
-
-function flowerFieldPoint(i,n){
-
-  const count=
-  flowerCenters.length;
-
-  const flower=
-  flowerCenters[i%count];
-
-  const local=
-  Math.floor(i/count);
-
-  const total=n/count;
-
-  const t=
-  Math.PI*2*(local/total);
-
-  const r=
-  flower.size*
-  0.35*
-  Math.cos(6*t);
-
-  return{
-
-    x:
-    flower.x+
-    r*Math.cos(t),
-
-    y:
-    flower.y+
-    r*Math.sin(t)
-
-  };
-}
-
-function heartPoint(i,n){
-
-  const t=
-  Math.PI*2*i/n;
-
-  const x=
-  16*Math.sin(t)**3;
-
-  const y=
-  -(13*Math.cos(t)
-  -5*Math.cos(2*t)
-  -2*Math.cos(3*t)
-  -Math.cos(4*t));
-
-  return{
-
-    x:x*0.16,
-    y:y*0.16
-
-  };
-}
-
-const colors=[
-  "#fff5fa",
-  "#ffd6e7",
-  "#ffb7d5",
-  "#ff8fc0",
-  "#ff6cac"
-];
-
-function drawMorph(from,to,p){
-
-  const e=ease(p);
-
-  const scale=
-  Math.min(W,H)/4.2;
-
-  for(let i=0;i<particles.length;i++){
-
-    const a=
-    from(i,particles.length);
-
-    const b=
-    to(i,particles.length);
-
-    const xShape=
-    a.x*(1-e)+b.x*e;
-
-    const yShape=
-    a.y*(1-e)+b.y*e;
-
-    const x=
-    W/2+xShape*scale;
-
-    const y=
-    H/2+yShape*scale;
-
-    const pulse=
-    .8+
-    .2*
-    Math.sin(
-      performance.now()/500+
-      particles[i].phase
-    );
-
-    ctx.fillStyle=
-    colors[i%colors.length];
-
-    ctx.shadowBlur=
-    18*pulse;
-
-    ctx.shadowColor=
-    colors[i%colors.length];
-
+    position:absolute;
    
